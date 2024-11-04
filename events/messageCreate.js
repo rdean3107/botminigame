@@ -1,5 +1,6 @@
+const fs = require('fs');
 const handlePing = require('../commands/ping');
-const handleSetPrefix = require('../commands/setPrefix');
+const handleSetPrefix = require('../commands/setPrefix'); // Nhập hàm handleSetPrefix
 const handleTaiXiu = require('../commands/taiXiu');
 const handleBauCua = require('../commands/bauCua');
 
@@ -8,18 +9,26 @@ const onMessageCreate = (message, config) => {
 
     const guildId = message.guild.id;
     const args = message.content.trim().split(/ +/g);
-    const prefix = config[guildId]?.prefix || 'z';
+    const prefix = config[guildId]?.prefix || 'z'; // Lấy prefix từ config hoặc mặc định là 'z'
     const isDitMe = message.content.toLowerCase().includes('ditme'); // Kiểm tra từ 'ditme'
     const isDuma = message.content.toLowerCase().includes('duma');   // Kiểm tra từ 'duma'
 
     // Lệnh kiểm tra độ trễ
-    if (args[0].toLowerCase() === `${prefix}ping`) handlePing(message);
+    if (args[0].toLowerCase() === `${prefix}ping`) {
+        handlePing(message);
+    } 
     // Lệnh thay đổi prefix
-    else if (args[0].toLowerCase() === `${prefix}setprefix`) handleSetPrefix(message, args, config);
+    else if (args[0].toLowerCase() === `${prefix}setprefix`) {
+        handleSetPrefix(message, args, config); // Gọi hàm handleSetPrefix
+    } 
     // Lệnh Tài Xỉu
-    else if (args[0].toLowerCase() === `${prefix}tx`) handleTaiXiu(message, isDitMe, isDuma);
+    else if (args[0].toLowerCase() === `${prefix}tx`) {
+        handleTaiXiu(message, isDitMe, isDuma);
+    } 
     // Lệnh Bầu Cua
-    else if (args[0].toLowerCase() === `${prefix}bc`) handleBauCua(message, isDitMe);
+    else if (args[0].toLowerCase() === `${prefix}bc`) {
+        handleBauCua(message, isDitMe);
+    }
 };
 
 module.exports = { onMessageCreate }; // Xuất hàm onMessageCreate
