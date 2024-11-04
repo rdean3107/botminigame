@@ -1,21 +1,18 @@
-const handlePing = require('../commands/ping');
-const handleSetPrefix = require('../commands/setPrefix');
-const handleTaiXiu = require('../commands/taiXiu');
-const handleBauCua = require('../commands/bauCua');
+// commands/setPrefix.js
+module.exports = (message, args, config) => {
+    if (args.length < 2) {
+        return message.channel.send('Vui lòng cung cấp prefix mới! Ví dụ: `zsetprefix !`');
+    }
 
-const onMessageCreate = (message, config) => {
-    if (message.author.bot) return;
-
+    const newPrefix = args[1];
     const guildId = message.guild.id;
-    const args = message.content.trim().split(/ +/g);
-    const prefix = config[guildId]?.prefix || 'z';
-    const isDitMe = message.content.toLowerCase().includes('ditme');
-    const isDuma = message.content.toLowerCase().includes('duma');
 
-    if (args[0].toLowerCase() === `${prefix}ping`) handlePing(message);
-    else if (args[0].toLowerCase() === `${prefix}setprefix`) handleSetPrefix(message, args, config);
-    else if (args[0].toLowerCase() === `${prefix}tx`) handleTaiXiu(message, isDitMe, isDuma);
-    else if (args[0].toLowerCase() === `${prefix}bc`) handleBauCua(message, isDitMe);
+    // Cập nhật config với prefix mới
+    config[guildId] = { ...config[guildId], prefix: newPrefix };
+
+    // Lưu lại config (tùy thuộc vào cách bạn lưu trữ config của mình)
+    // Ví dụ: nếu bạn sử dụng JSON
+    // fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
+
+    message.channel.send(`Prefix đã được thay đổi thành \`${newPrefix}\``);
 };
-
-module.exports = { onMessageCreate };
