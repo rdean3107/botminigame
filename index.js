@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js'); // Thêm ActivityType
+const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js');
 const fs = require('fs');
 const { onReady } = require('./events/ready');
 const { onMessageCreate } = require('./events/messageCreate');
@@ -19,19 +19,43 @@ try {
     config = {}; // Khởi tạo config rỗng nếu không tìm thấy tệp
 }
 
+// Danh sách các trạng thái hoạt động
+const activities = [
+    { name: 'với Discord.js', type: ActivityType.Playing },
+    { name: 'các thành viên', type: ActivityType.Watching },
+    { name: 'âm nhạc', type: ActivityType.Listening },
+    { name: 'trực tuyến', type: ActivityType.Streaming, url: 'https://twitch.tv/tên_của_bạn' },
+];
+
 // Khởi động bot
 client.once(Events.ClientReady, async () => {
     await onReady(client);
-    
     console.log(`Bot đã sẵn sàng! Đăng nhập với tư cách: ${client.user.tag}`);
 
-    // Thêm thông báo hoạt động cho bot
-    client.user.setActivity('với Discord.js', { type: ActivityType.Playing });
+    // Thay đổi trạng thái hoạt động liên tục
+    let index = 0; // Bắt đầu từ trạng thái đầu tiên
+    setInterval(() => {
+        const activity = activities[index];
+        client.user.setActivity(activity.name, { type: activity.type, url: activity.url });
+        index = (index + 1) % activities.length; // Cập nhật chỉ số, quay lại đầu nếu vượt quá
+    }, 10000); // Thay đổi trạng thái mỗi 10 giây (10000 ms)
 
-    // Nếu bạn muốn sử dụng các hoạt động khác, hãy bỏ chú thích các dòng dưới đây
-    // client.user.setActivity('các thành viên', { type: ActivityType.Watching });
-    // client.user.setActivity('âm nhạc', { type: ActivityType.Listening });
-    // client.user.setActivity('trực tuyến', { type: ActivityType.Streaming, url: 'https://twitch.tv/tên_của_bạn' });
+    // Đặt trạng thái ban đầu
+    client.user.setPresence({
+        activities: [{ name: 'trò chuyện với bạn', type: ActivityType.Custom }],
+        status: 'online', // Trạng thái ban đầu là 'online'
+    });
+
+    // Thay đổi trạng thái định kỳ (ví dụ mỗi 30 giây)
+    let presenceIndex = 0; // Chỉ số cho trạng thái
+    const presenceStatuses = ['online', 'idle', 'dnd']; // Danh sách trạng thái
+    setInterval(() => {
+        client.user.setPresence({
+            activities: [{ name: 'trò chuyện với bạn', type: ActivityType.Custom }],
+            status: presenceStatuses[presenceIndex], // Cập nhật trạng thái
+        });
+        presenceIndex = (presenceIndex + 1) % presenceStatuses.length; // Cập nhật chỉ số, quay lại đầu nếu vượt quá
+    }, 30000); // Thay đổi trạng thái mỗi 30 giây
 });
 
 // Xử lý tin nhắn
