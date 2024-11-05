@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js'); // Thêm ActivityType
 const fs = require('fs');
 const { onReady } = require('./events/ready');
 const { onMessageCreate } = require('./events/messageCreate');
@@ -20,7 +20,19 @@ try {
 }
 
 // Khởi động bot
-client.once('ready', () => onReady(client));
+client.once(Events.ClientReady, async () => {
+    await onReady(client);
+    
+    console.log(`Bot đã sẵn sàng! Đăng nhập với tư cách: ${client.user.tag}`);
+
+    // Thêm thông báo hoạt động cho bot
+    client.user.setActivity('với Discord.js', { type: ActivityType.Playing });
+
+    // Nếu bạn muốn sử dụng các hoạt động khác, hãy bỏ chú thích các dòng dưới đây
+    // client.user.setActivity('các thành viên', { type: ActivityType.Watching });
+    // client.user.setActivity('âm nhạc', { type: ActivityType.Listening });
+    // client.user.setActivity('trực tuyến', { type: ActivityType.Streaming, url: 'https://twitch.tv/tên_của_bạn' });
+});
 
 // Xử lý tin nhắn
 client.on('messageCreate', (message) => onMessageCreate(message, config));
