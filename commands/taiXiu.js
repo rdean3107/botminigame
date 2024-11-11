@@ -13,7 +13,7 @@ module.exports = async (message, isDitMe, isDuma) => {
 
     try {
         const initialMessage = await message.channel.send('<a:lac:1305457531518455870> <a:lac:1305457531518455870> <a:lac:1305457531518455870>');
-        const rollingMessage = await message.channel.send('**<a:danglac:1302588793202671616> Đang lắc...**');
+        const rollingMessage = await message.channel.send('**<a:danglac:1305461120764743731> Đang lắc...**');
         const finalResults = [null, null, null];
         let rollCount = 0;
 
@@ -28,7 +28,7 @@ module.exports = async (message, isDitMe, isDuma) => {
                 const total = finalResults.reduce((acc, num) => acc + num, 0);
                 const resultType = total <= 10 ? 'Xỉu' : 'Tài';
                 const parity = total % 2 === 0 ? 'Chẵn' : 'Lẻ';
-                await rollingMessage.edit(`**<a:money:1302576106435645491> ${total}・${resultType}・${parity} <a:money:1302576106435645491>**`);
+                await rollingMessage.edit(`**<a:money:1305461123121811539> ${total}・${resultType}・${parity} <a:money:1305461123121811539>**`);
                 
                 // Thêm log cho lệnh
                 console.log(`Lệnh bởi ${message.author.tag}: Kết quả Tài Xỉu: ${finalResults.join(', ')} ${resultType} ${parity}`);
