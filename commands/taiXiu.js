@@ -12,7 +12,7 @@ module.exports = async (message, isDitMe, isDuma) => {
     }
 
     try {
-        const initialMessage = await message.channel.send('<a:doxucxacc:1302586690455732224> <a:doxucxacc:1302586690455732224> <a:doxucxacc:1302586690455732224>');
+        const initialMessage = await message.channel.send('<a:lac:1238134159910768640> <a:lac:1238134159910768640> <a:lac:1238134159910768640>');
         const rollingMessage = await message.channel.send('**<a:danglac:1302588793202671616> Đang lắc...**');
         const finalResults = [null, null, null];
         let rollCount = 0;
