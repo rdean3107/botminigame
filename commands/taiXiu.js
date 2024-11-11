@@ -12,14 +12,14 @@ module.exports = async (message, isDitMe, isDuma) => {
     }
 
     try {
-        const initialMessage = await message.channel.send('<a:lac:1238134159910768640> <a:lac:1238134159910768640> <a:lac:1238134159910768640>');
+        const initialMessage = await message.channel.send('<a:lac:1305457531518455870> <a:lac:1305457531518455870> <a:lac:1305457531518455870>');
         const rollingMessage = await message.channel.send('**<a:danglac:1302588793202671616> Đang lắc...**');
         const finalResults = [null, null, null];
         let rollCount = 0;
 
         const rollingInterval = setInterval(async () => {
             finalResults[rollCount] = rollDice(isDitMe, isDuma);
-            const diceEmojisString = finalResults.map(result => result ? diceEmojis[result] : '<a:doxucxacc:1302586690455732224>').join(' ');
+            const diceEmojisString = finalResults.map(result => result ? diceEmojis[result] : '<a:lac:1305457531518455870>').join(' ');
             await initialMessage.edit(diceEmojisString);
             rollCount++;
 
