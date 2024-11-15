@@ -3,6 +3,9 @@ const handlePing = require('../commands/ping');
 const handleSetPrefix = require('../commands/setPrefix'); // Nhập hàm handleSetPrefix
 const handleTaiXiu = require('../commands/taiXiu');
 const handleBauCua = require('../commands/bauCua');
+const handleRanDom = require('../commands/random');
+const handleMath = require('../commands/math');
+const handleGiveAway = require('../commands/giveaway')
 
 const onMessageCreate = (message, config) => {
     if (message.author.bot) return; // Bỏ qua tin nhắn từ bot
@@ -28,6 +31,18 @@ const onMessageCreate = (message, config) => {
     // Lệnh Bầu Cua
     else if (args[0].toLowerCase() === `${prefix}bc`) {
         handleBauCua(message, isDitMe);
+    } 
+    // Lệnh Random
+    else if (args[0].toLowerCase() === `${prefix}rd`) {
+        handleRanDom.execute(message, args); // Gọi hàm execute từ random.js
+    } 
+    // Lệnh Math
+    else if (args[0].toLowerCase() === `${prefix}m`) {
+        handleMath.execute(message, args); // Gọi hàm handleMath
+    } 
+    // Lệnh Giveaway
+    else if (args[0].toLowerCase() === `${prefix}ga`) {  // Đảm bảo là `prefix + ga`
+        handleGiveAway.execute(message, args); // Gọi hàm execute từ giveaway.js
     }
 };
 
