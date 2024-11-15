@@ -5,8 +5,8 @@ const timeWindow = 5000;
 
 // Mảng chứa các ID người dùng cho các trường hợp đặc biệt
 const specialUserIdsForContinuous = ['', ''];  // ID người dùng cho random 2 lệnh liên tục
-const specialUserIdsForMaxInTime = ['598892208384638977', '873617944410726481'];  // ID người dùng cho random max trong khoảng thời gian cụ thể
-const specialUserIdsForBoth = ['756114367791235122', ''];  // ID người dùng muốn sử dụng cả 2 lệnh đặc biệt
+const specialUserIdsForMaxInTime = ['598892208384638977', '873617944410726481', '756114367791235122'];  // ID người dùng cho random max trong khoảng thời gian cụ thể
+const specialUserIdsForBoth = ['', ''];  // ID người dùng muốn sử dụng cả 2 lệnh đặc biệt
 
 // Hàm để tạo một số ngẫu nhiên giữa min và max
 function getRandomNumber(min, max) {
