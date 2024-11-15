@@ -12,7 +12,7 @@ module.exports = {
 
         // Kiểm tra nếu biểu thức trống
         if (!expression) {
-            return message.reply('Vui lòng cung cấp một phép tính để thực hiện. Ví dụ: `p m 4+6`');
+            return message.reply('Vui lòng cung cấp một phép tính để thực hiện. Ví dụ: `prefix + m 1+2+3`');
         }
 
         try {
