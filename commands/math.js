@@ -1,30 +1,34 @@
-const math = require('mathjs');  // Sử dụng mathjs
+const math = require('mathjs');  // Import mathjs
 
 module.exports = {
-    name: 'm',  // Đặt tên lệnh là 'm'
+    name: 'm',  // Tên lệnh
     description: 'Tính toán phép toán đã nhập.',
     async execute(message, args) {
-        // Kiểm tra nếu không có tham số hoặc chỉ có 'pm' mà không có phép toán
+        // Kiểm tra nếu không có phép toán hoặc chỉ nhập 'pm'
         if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === 'pm')) {
-            return message.reply('Vui lòng cung cấp một phép tính để thực hiện. Ví dụ: `pm 1+2-3`');
+            return message.reply('Vui lòng cung cấp một phép tính để thực hiện. Ví dụ: `p m 1+2-3`');
         }
 
-        // Kết hợp các phần của phép tính (trong trường hợp có khoảng trắng)
-        let expression = args.join(' ');
+        // Kết hợp các tham số thành biểu thức phép tính
+        let expression = args.join(' ').trim();
 
-        // Kiểm tra nếu phép toán bắt đầu bằng 'pm ' và loại bỏ nó, không phân biệt chữ hoa hay chữ thường
+        // Xử lý nếu biểu thức bắt đầu bằng 'pm'
         if (expression.toLowerCase().startsWith('pm ')) {
-            expression = expression.slice(3);  // Loại bỏ 'pm ' (3 ký tự)
+            expression = expression.slice(3).trim();  // Loại bỏ 'pm' và khoảng trắng sau đó
         }
 
         try {
-            // Tính toán phép toán
+            // Ghi log để kiểm tra biểu thức
+            console.log(`Expression: "${expression}"`);
+
+            // Thực hiện phép tính với math.evaluate
             const result = math.evaluate(expression);
 
-            // Gửi kết quả
-            message.reply(`<:tick:1306785771881107456> **OCB**, Kết quả của phép toán là: **${result}**`);
+            // Đưa ra kết quả tính toán
+            return message.reply(`<:tick:1306785771881107456> **OCB**, Kết quả của phép toán là: **${result}**`);
         } catch (error) {
-            // Nếu phép toán không hợp lệ, thông báo lỗi
+            // Ghi log lỗi để chẩn đoán
+            console.error(`Calculation error: ${error}`);
             return message.reply('Có lỗi xảy ra khi tính toán phép toán! Vui lòng kiểm tra lại cú pháp.');
         }
     }
