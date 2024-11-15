@@ -3,9 +3,10 @@ let lastRandomTime = 0;
 // Khoảng thời gian tối thiểu giữa 2 lệnh random (5000ms = 5 giây)
 const timeWindow = 5000; 
 
-// ID người dùng cho các trường hợp đặc biệt
-const specificUserIdForContinuous = '756114367791235122';  // ID người dùng cho random 2 lệnh liên tục
-const specificUserIdForMaxInTime = '873617944410726481';  // ID người dùng cho random max trong khoảng thời gian cụ thể
+// Mảng chứa các ID người dùng cho các trường hợp đặc biệt
+const specialUserIdsForContinuous = ['756114367791235122', '123456789012345678'];  // ID người dùng cho random 2 lệnh liên tục
+const specialUserIdsForMaxInTime = ['756114367791235122', '876543210987654321'];  // ID người dùng cho random max trong khoảng thời gian cụ thể
+const specialUserIdsForBoth = ['123456789012345678', '876543210987654321'];  // ID người dùng muốn sử dụng cả 2 lệnh đặc biệt
 
 // Hàm để tạo một số ngẫu nhiên giữa min và max
 function getRandomNumber(min, max) {
@@ -15,22 +16,26 @@ function getRandomNumber(min, max) {
 // Hàm chính xử lý lệnh random
 module.exports = {
     name: 'rd',  // Tên lệnh
-    description: 'Tạo một số ngẫu nhiên giữa hai giá trị, mặc định từ 1 đến 10.',  // Mô tả lệnh
+    description: 'Tạo một số ngẫu nhiên giữa hai giá trị, mặc định từ 0 đến 10.',  // Mô tả lệnh
     execute(message, args) {
-        let min = 1;  // Giá trị min mặc định
-        let max = 10; // Giá trị max mặc định
+        let min = 0;  // Giá trị min mặc định là 0
+        let max = 10; // Giá trị max mặc định là 10
 
-        // Kiểm tra nếu có 1 tham số (max) hoặc 2 tham số (min và max)
+        // Nếu có tham số, kiểm tra và thay đổi min/max
         if (args.length === 1) {
-            max = parseInt(args[0]);  // Chỉ có max
+            const parsedMax = parseInt(args[0]);  // Chỉ có max
+            if (!isNaN(parsedMax)) {
+                max = parsedMax;  // Gán max nếu tham số hợp lệ
+            }
         } else if (args.length === 2) {
-            min = parseInt(args[0]);  // Có cả min và max
-            max = parseInt(args[1]);
-        }
-
-        // Kiểm tra nếu min hoặc max không phải là số hợp lệ
-        if (isNaN(min) || isNaN(max)) {
-            return message.reply('Vui lòng nhập số hợp lệ!');  // Thông báo lỗi nếu không phải số
+            const parsedMin = parseInt(args[0]);  // Có cả min và max
+            const parsedMax = parseInt(args[1]);
+            if (!isNaN(parsedMin)) {
+                min = parsedMin;  // Gán min nếu tham số hợp lệ
+            }
+            if (!isNaN(parsedMax)) {
+                max = parsedMax;  // Gán max nếu tham số hợp lệ
+            }
         }
 
         // Đảm bảo min luôn nhỏ hơn hoặc bằng max
@@ -40,14 +45,14 @@ module.exports = {
         const userDisplayName = message.guild.members.cache.get(message.author.id).displayName;
 
         // Kiểm tra nếu người dùng là người cụ thể cho random 2 lệnh liên tục
-        if (message.author.id === specificUserIdForContinuous) {
+        if (specialUserIdsForContinuous.includes(message.author.id)) {
             const currentTime = new Date().getTime();  // Lấy thời gian hiện tại (tính bằng ms)
             const timeDifference = currentTime - lastRandomTime;  // Tính thời gian chênh lệch giữa 2 lần random
             let randomNumber;
 
             // Nếu khoảng thời gian giữa 2 lệnh nhỏ hơn hoặc bằng 5 giây
             if (timeDifference <= timeWindow) {
-                randomNumber = 0;  // Lệnh thứ 2 luôn trả về số min (0)
+                randomNumber = min;  // Lệnh thứ 2 luôn trả về số min (0)
             } else {
                 randomNumber = getRandomNumber(min, max);  // Lệnh đầu tiên trả về số random bình thường
             }
@@ -60,7 +65,7 @@ module.exports = {
         }
 
         // Kiểm tra nếu người dùng là người cụ thể và muốn random max trong khoảng thời gian cụ thể (20s-30s và 50s-60s)
-        if (message.author.id === specificUserIdForMaxInTime) {
+        if (specialUserIdsForMaxInTime.includes(message.author.id)) {
             const currentTime = new Date();  // Lấy thời gian hiện tại
             const currentSeconds = currentTime.getSeconds();  // Lấy giây của thời gian hiện tại
 
