@@ -1,103 +1,85 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const ms = require('ms');
 
 module.exports = {
-    name: 'ga',
-    description: 'Tạo giveaway và chọn người thắng cuộc.',
-    async execute(message, args) {
-        const { guild, channel } = message;
-
-        // Kiểm tra nếu người dùng có quyền quản lý server
-        if (!message.member.permissions.has('MANAGE_GUILD')) {
-            return message.reply('Bạn không có quyền quản lý server để tạo giveaway!');
+    name: 'giveaway',
+    description: 'Tạo một giveaway với phần thưởng, thời gian và số lượng người thắng cuộc.',
+    execute: async (message, args) => {
+        // Kiểm tra quyền hạn của người dùng
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+            return message.reply('Bạn không có quyền quản lý tin nhắn để tạo giveaway.');
         }
 
-        // Kiểm tra cú pháp lệnh
+        // Kiểm tra và xử lý các tham số
         if (args.length < 3) {
-            return message.reply('Vui lòng cung cấp đầy đủ thông tin. Cú pháp: `!ga <thời gian> <số người thắng> <giải thưởng>`');
+            return message.reply('Cần cung cấp đủ thông tin hợp lệ: thời gian (ví dụ: 10s), số người thắng và phần thưởng.');
         }
 
-        const timeInput = args[0];  // Thời gian giveaway (sử dụng chuỗi có đơn vị như 1s, 1m, 1h, 1d)
-        const winners = parseInt(args[1]);  // Số người thắng cuộc
-        const prize = args.slice(2).join(' ');  // Giải thưởng của giveaway
+        // Loại bỏ prefix 'xga' khỏi tham số đầu vào
+        args.shift(); // Loại bỏ prefix 'xga'
 
-        // Kiểm tra số người thắng cuộc
-        if (isNaN(winners) || winners <= 0) {
-            return message.reply('Số người thắng cuộc không hợp lệ!');
+        // Tách tham số từ args
+        const [timeInput, winnerCountInput, ...prizeArray] = args;
+        const prize = prizeArray.join(" "); // Kết hợp các phần thưởng lại thành một chuỗi
+        const winnerCount = parseInt(winnerCountInput);
+        const time = ms(timeInput); // Chuyển đổi thời gian sang milliseconds
+
+        // Log các giá trị để kiểm tra
+        console.log('Thời gian:', timeInput);
+        console.log('Số người thắng:', winnerCountInput);
+        console.log('Phần thưởng:', prize);
+
+        // Kiểm tra tính hợp lệ của các tham số
+        if (!time || isNaN(time) || time <= 0) {
+            return message.reply('Thời gian không hợp lệ, vui lòng cung cấp thời gian hợp lệ (ví dụ: 10s, 1m, 1h).');
         }
 
-        // Hàm chuyển đổi thời gian
-        const parseTime = (timeStr) => {
-            const regex = /^(\d+)([smhd])$/;
-            const match = timeStr.match(regex);
-            if (!match) return NaN;
-
-            const amount = parseInt(match[1]);
-            const unit = match[2];
-
-            switch (unit) {
-                case 's': return amount * 1000; // giây
-                case 'm': return amount * 60 * 1000; // phút
-                case 'h': return amount * 60 * 60 * 1000; // giờ
-                case 'd': return amount * 24 * 60 * 60 * 1000; // ngày
-                default: return NaN;
-            }
-        };
-
-        // Chuyển đổi thời gian và kiểm tra tính hợp lệ
-        const time = parseTime(timeInput);
-        if (isNaN(time) || time <= 0) {
-            return message.reply('Thời gian giveaway không hợp lệ! Hãy sử dụng định dạng hợp lệ như 1s, 1m, 1h, hoặc 1d.');
+        if (!winnerCount || isNaN(winnerCount) || winnerCount < 1) {
+            return message.reply('Số người thắng không hợp lệ, vui lòng cung cấp số người thắng hợp lệ.');
         }
 
-        // Tính toán thời gian kết thúc
-        const endTime = Date.now() + time;
-        const endDate = new Date(endTime);
+        if (!prize || prize.trim().length === 0) {
+            return message.reply('Phần thưởng không thể trống.');
+        }
 
-        // Tính toán xem giveaway kết thúc vào ngày mai hay hôm nay
-        const isTomorrow = endDate.getDate() !== new Date().getDate();
-        const timeString = isTomorrow ? `Ngày mai lúc ${endDate.getHours()}:${endDate.getMinutes() < 10 ? '0' + endDate.getMinutes() : endDate.getMinutes()}` : `Hôm nay lúc ${endDate.getHours()}:${endDate.getMinutes() < 10 ? '0' + endDate.getMinutes() : endDate.getMinutes()}`;
-
-        // Gửi dòng trang trí trước embed
+        // Gửi thông báo trước khi tạo giveaway
         message.channel.send('<a:kh_laplanh:1258677300866842755><a:kh_duoi1:1247720973642498170> **GIVEAWAYS** <a:kh_duoi2:1247720919397433495><a:kh_laplanh:1258677300866842755>');
-        
-        const giveawayEmbed = new EmbedBuilder()
-        .setTitle(`${prize}`) // Đảm bảo sử dụng dấu backtick ` để hiển thị giá trị prize trong title
-        .setDescription(`
-        Bấm: <a:kh_hun:1239924970188967946> để tham gia giveaway!
-        <a:kh_hun:1239924970188967946>・Kết thúc trong: ${ms(time, { long: true })}
-        <a:kh_hun:1239924970188967946>・Làm bởi: ${message.author.tag}
-        ${winners} giải • ${timeString}
-        `)
-        .setColor('#FF0000') // Màu đỏ hoặc bất kỳ mã màu nào bạn muốn
-        .setThumbnail(message.author.displayAvatarURL()) // Lấy ảnh đại diện của người tạo giveaway
-        
-        // Gửi tin nhắn giveaway
-        const giveawayMessage = await channel.send({
-            embeds: [giveawayEmbed],
-        });
 
-        // React với emoji để người dùng tham gia giveaway
+        // Tạo embed giveaway
+        const giveawayEmbed = new EmbedBuilder()
+            .setTitle(prize)
+            .setDescription(`
+                Bấm: <a:kh_hun:1239924970188967946> để tham gia giveaway!
+                <a:kh_hun:1239924970188967946>・Kết thúc trong: ${ms(time, { long: true })}
+                <a:kh_hun:1239924970188967946>・Làm bởi: ${message.author.tag}
+                Số người thắng: ${winnerCount}
+            `)
+            .setColor('#FF0000')
+            .setThumbnail(message.author.displayAvatarURL());
+
+        // Gửi embed vào channel
+        const giveawayMessage = await message.channel.send({ embeds: [giveawayEmbed] });
+
+        // React với emoji để tham gia
         await giveawayMessage.react('<a:kh_hun:1239924970188967946>');
 
-        // Xử lý khi hết thời gian giveaway
+        // Xử lý khi giveaway kết thúc
         setTimeout(async () => {
-            const reactions = await giveawayMessage.reactions.cache.get('1239924970188967946'); // ID emoji của bạn
+            const reactions = await giveawayMessage.reactions.cache.get('1239924970188967946');
             if (reactions) {
-                // Lấy người tham gia từ reaction
                 const users = await reactions.users.fetch();
-                const winnerArray = Array.from(users.values());
-                // Lọc ra người trúng thưởng (loại bỏ bot)
-                const winnersList = winnerArray.filter(user => !user.bot);
-                const winnersText = winnersList.slice(0, winners).map(user => `<@${user.id}>`).join(', ') || 'Không có người tham gia';
+                const participants = users.filter(user => !user.bot);
+                const winnersList = participants.random(winnerCount);
 
-                // Thông báo kết quả bằng văn bản (text)
-                message.channel.send(
-                    `<a:kh_hun:1239924970188967946> Chúc mừng ${winnersText}! đã trúng **${prize}**`
-                );
+                if (winnersList.length > 0) {
+                    const winnersText = winnersList.map(user => `<@${user.id}>`).join(', ');
+                    message.channel.send(`<a:kh_hun:1239924970188967946> Chúc mừng ${winnersText} đã trúng **${prize}**!`);
+                } else {
+                    message.channel.send('Không có người tham gia giveaway!');
+                }
             } else {
-                message.channel.send('Không có ai tham gia giveaway!');
+                message.channel.send('Không có người tham gia giveaway!');
             }
-        }, time);  // Thời gian chờ đến khi giveaway kết thúc
+        }, time);  // Đợi cho đến khi giveaway kết thúc
     },
 };
