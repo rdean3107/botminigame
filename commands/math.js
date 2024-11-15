@@ -1,34 +1,32 @@
 const math = require('mathjs');  // Import mathjs
 
 module.exports = {
-    name: 'm',  // Tên lệnh
+    name: 'm',  // Tên lệnh là 'm'
     description: 'Tính toán phép toán đã nhập.',
     async execute(message, args) {
-        // Kiểm tra nếu không có phép toán hoặc chỉ nhập 'pm'
-        if (args.length === 0 || (args.length === 1 && args[0].toLowerCase() === 'pm')) {
-            return message.reply('Vui lòng cung cấp một phép tính để thực hiện. Ví dụ: `p m 1+2-3`');
-        }
-
-        // Kết hợp các tham số thành biểu thức phép tính
+        // Kết hợp các phần của phép tính (trong trường hợp có khoảng trắng)
         let expression = args.join(' ').trim();
 
-        // Xử lý nếu biểu thức bắt đầu bằng 'pm'
-        if (expression.toLowerCase().startsWith('pm ')) {
-            expression = expression.slice(3).trim();  // Loại bỏ 'pm' và khoảng trắng sau đó
+        // Loại bỏ bất kỳ tiền tố nào (giả sử là các từ trước phép toán)
+        expression = expression.replace(/^\S+\s*/, '').trim();  // Loại bỏ bất kỳ chuỗi không phải là phép toán (ví dụ: "pm", "lệnh", ...)
+
+        // Thông báo debug: Kiểm tra giá trị expression
+        console.log("Expression received: ", expression);
+
+        // Kiểm tra nếu biểu thức trống
+        if (!expression) {
+            return message.reply('Vui lòng cung cấp một phép tính để thực hiện. Ví dụ: `prefix+m 1+2*3/6`');
         }
 
         try {
-            // Ghi log để kiểm tra biểu thức
-            console.log(`Expression: "${expression}"`);
-
-            // Thực hiện phép tính với math.evaluate
+            // Thực hiện tính toán
             const result = math.evaluate(expression);
 
-            // Đưa ra kết quả tính toán
-            return message.reply(`<:tick:1306785771881107456> **OCB**, Kết quả của phép toán là: **${result}**`);
+            // Trả kết quả
+            message.reply(`<:tick:1306785771881107456> **OCB**, Kết quả của phép toán là: **${result}**`);
         } catch (error) {
-            // Ghi log lỗi để chẩn đoán
-            console.error(`Calculation error: ${error}`);
+            // Nếu phép toán không hợp lệ, thông báo lỗi
+            console.error('Error calculating expression: ', error);  // Thông báo lỗi debug
             return message.reply('Có lỗi xảy ra khi tính toán phép toán! Vui lòng kiểm tra lại cú pháp.');
         }
     }
