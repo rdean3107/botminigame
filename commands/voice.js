@@ -11,10 +11,17 @@ module.exports = {
             // Lệnh "!join" để bot tham gia voice channel
             if (message.member.voice.channel) {
                 try {
+                    console.log("Bot đang cố gắng tham gia voice channel...");
                     const connection = joinVoiceChannel({
                         channelId: message.member.voice.channel.id,
                         guildId: message.guild.id,
                         adapterCreator: message.guild.voiceAdapterCreator,
+                    });
+
+                    // Kiểm tra kết nối
+                    connection.on('error', (error) => {
+                        console.error('Lỗi khi kết nối voice channel:', error);
+                        message.reply('Không thể kết nối vào voice channel. Vui lòng thử lại.');
                     });
 
                     // Tạo audio player và phát file âm thanh tĩnh
