@@ -6,7 +6,7 @@ const { onReady } = require('./events/ready');
 const { onMessageCreate } = require('./events/messageCreate');
 
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
 });
 
 // Đọc cấu hình từ tệp JSON
