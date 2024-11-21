@@ -23,7 +23,8 @@ module.exports = {
         }
 
         // Kiểm tra quyền của bot trong voice channel
-        if (!voiceChannel.permissionsFor(message.guild.me).has('CONNECT') || !voiceChannel.permissionsFor(message.guild.me).has('SPEAK')) {
+        const botPermissions = voiceChannel.permissionsFor(message.client.user);
+        if (!botPermissions || !botPermissions.has('CONNECT') || !botPermissions.has('SPEAK')) {
             return message.reply('Bot không có đủ quyền để tham gia và phát âm thanh trong voice channel.');
         }
 
@@ -54,7 +55,7 @@ module.exports = {
                     // Kiểm tra nếu bot bị mất kết nối, và tham gia lại nếu bị mất
                     if (newState.status === 'disconnected' || newState.status === 'destroyed') {
                         console.log(`Bot bị mất kết nối khỏi voice channel. Đang thử tham gia lại...`);
-                        this.reconnectIfDisconnected(message.guild.id);
+                        this.reconnectIfDisconnected(message.client, message.guild.id);
                     }
                 });
 
@@ -78,7 +79,7 @@ module.exports = {
     },
 
     // Hàm kiểm tra và tái kết nối bot nếu bị mất kết nối
-    reconnectIfDisconnected(guildId) {
+    reconnectIfDisconnected(client, guildId) {
         const voiceChannelId = this.activeConnections[guildId];
         
         if (!voiceChannelId) {
@@ -91,7 +92,7 @@ module.exports = {
 
         if (!voiceChannel) {
             console.log('Bot không còn kết nối, đang cố gắng tham gia lại...');
-            const guild = this.client.guilds.cache.get(guildId);
+            const guild = client.guilds.cache.get(guildId);
             if (!guild) return;
             const channel = guild.channels.cache.get(voiceChannelId);
 
