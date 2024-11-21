@@ -5,7 +5,8 @@ const handleTaiXiu = require('../commands/taiXiu');
 const handleBauCua = require('../commands/bauCua');
 const handleRanDom = require('../commands/random');
 const handleMath = require('../commands/math');
-const handleGiveAway = require('../commands/giveaway')
+const handleGiveAway = require('../commands/giveaway');
+const handleVoice = require('../commands/voice');
 
 const onMessageCreate = (message, config) => {
     if (message.author.bot) return; // Bỏ qua tin nhắn từ bot
@@ -43,6 +44,14 @@ const onMessageCreate = (message, config) => {
     // Lệnh Giveaway
     else if (args[0].toLowerCase() === `${prefix}ga`) {  // Đảm bảo là `prefix + ga`
         handleGiveAway.execute(message, args); // Gọi hàm execute từ giveaway.js
+    }
+    // Lệnh Join Voice Channel
+    else if (args[0].toLowerCase() === `${prefix}join`) {
+        handleVoice.execute(message); // Gọi hàm execute từ voice.js với lệnh join
+    }
+    // Lệnh Leave Voice Channel
+    else if (args[0].toLowerCase() === `${prefix}leave`) {
+        handleVoice.execute(message); // Gọi hàm execute từ voice.js với lệnh leave
     }
 };
 
