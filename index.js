@@ -4,6 +4,14 @@ const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js'
 const fs = require('fs');
 const { onReady } = require('./events/ready');
 const { onMessageCreate } = require('./events/messageCreate');
+const sodium = require('libsodium-wrappers');  // Import libsodium-wrappers
+
+// Khởi tạo libsodium-wrappers
+sodium.ready.then(() => {
+    console.log('libsodium is ready');  // Thông báo khi libsodium được khởi tạo thành công
+}).catch(err => {
+    console.error('Error initializing libsodium:', err);  // Xử lý lỗi nếu không khởi tạo được
+});
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
