@@ -4,18 +4,6 @@ const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js'
 const fs = require('fs');
 const { onReady } = require('./events/ready');
 const { onMessageCreate } = require('./events/messageCreate');
-const { generateDependencyReport } = require('@discordjs/voice');
-
-// Khởi tạo libsodium-wrappers
-const sodium = require('libsodium-wrappers');
-sodium.ready.then(() => {
-    console.log('libsodium is ready');
-}).catch(err => {
-    console.error('Error initializing libsodium:', err);
-});
-
-// Sử dụng generateDependencyReport để kiểm tra các phụ thuộc
-console.log(generateDependencyReport());
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
@@ -31,7 +19,7 @@ try {
     config = {}; // Khởi tạo config rỗng nếu không tìm thấy tệp
 }
 
-// Các trạng thái hoạt động
+// Danh sách các trạng thái hoạt động
 const activities = [
     { name: 'với Discord.js', type: ActivityType.Playing },
     { name: 'các thành viên', type: ActivityType.Watching },
@@ -44,28 +32,30 @@ client.once(Events.ClientReady, async () => {
     await onReady(client);
     console.log(`Bot đã sẵn sàng! Đăng nhập với tư cách: ${client.user.tag}`);
 
-    let index = 0;
+    // Thay đổi trạng thái hoạt động liên tục
+    let index = 0; // Bắt đầu từ trạng thái đầu tiên
     setInterval(() => {
         const activity = activities[index];
         client.user.setActivity(activity.name, { type: activity.type, url: activity.url });
-        index = (index + 1) % activities.length;
-    }, 10000); // Thay đổi trạng thái mỗi 10 giây
+        index = (index + 1) % activities.length; // Cập nhật chỉ số, quay lại đầu nếu vượt quá
+    }, 10000); // Thay đổi trạng thái mỗi 10 giây (10000 ms)
 
     // Đặt trạng thái ban đầu
     client.user.setPresence({
         activities: [{ name: 'trò chuyện với bạn', type: ActivityType.Custom }],
-        status: 'online',
+        status: 'online', // Trạng thái ban đầu là 'online'
     });
 
-    let presenceIndex = 0;
-    const presenceStatuses = ['online', 'idle', 'dnd'];
+    // Thay đổi trạng thái định kỳ (ví dụ mỗi 30 giây)
+    let presenceIndex = 0; // Chỉ số cho trạng thái
+    const presenceStatuses = ['online', 'idle', 'dnd']; // Danh sách trạng thái
     setInterval(() => {
         client.user.setPresence({
             activities: [{ name: 'trò chuyện với bạn', type: ActivityType.Custom }],
-            status: presenceStatuses[presenceIndex],
+            status: presenceStatuses[presenceIndex], // Cập nhật trạng thái
         });
-        presenceIndex = (presenceIndex + 1) % presenceStatuses.length;
-    }, 30000);
+        presenceIndex = (presenceIndex + 1) % presenceStatuses.length; // Cập nhật chỉ số, quay lại đầu nếu vượt quá
+    }, 30000); // Thay đổi trạng thái mỗi 30 giây
 });
 
 // Xử lý tin nhắn
@@ -85,4 +75,4 @@ const writeConfig = () => {
     fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
 };
 
-module.exports = { config, writeConfig };
+module.exports = { config, writeConfig }; // Xuất config và hàm ghi cấu hình
