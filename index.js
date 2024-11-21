@@ -6,7 +6,12 @@ const { onReady } = require('./events/ready');
 const { onMessageCreate } = require('./events/messageCreate');
 
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
+    ],
 });
 
 // Đọc cấu hình từ tệp JSON
@@ -33,28 +38,28 @@ client.once(Events.ClientReady, async () => {
     console.log(`Bot đã sẵn sàng! Đăng nhập với tư cách: ${client.user.tag}`);
 
     // Thay đổi trạng thái hoạt động liên tục
-    let index = 0; // Bắt đầu từ trạng thái đầu tiên
+    let index = 0;
     setInterval(() => {
         const activity = activities[index];
         client.user.setActivity(activity.name, { type: activity.type, url: activity.url });
-        index = (index + 1) % activities.length; // Cập nhật chỉ số, quay lại đầu nếu vượt quá
-    }, 10000); // Thay đổi trạng thái mỗi 10 giây (10000 ms)
+        index = (index + 1) % activities.length;
+    }, 10000); // Thay đổi trạng thái mỗi 10 giây
 
     // Đặt trạng thái ban đầu
     client.user.setPresence({
         activities: [{ name: 'trò chuyện với bạn', type: ActivityType.Custom }],
-        status: 'online', // Trạng thái ban đầu là 'online'
+        status: 'online',
     });
 
-    // Thay đổi trạng thái định kỳ (ví dụ mỗi 30 giây)
-    let presenceIndex = 0; // Chỉ số cho trạng thái
-    const presenceStatuses = ['online', 'idle', 'dnd']; // Danh sách trạng thái
+    // Thay đổi trạng thái định kỳ
+    let presenceIndex = 0;
+    const presenceStatuses = ['online', 'idle', 'dnd'];
     setInterval(() => {
         client.user.setPresence({
             activities: [{ name: 'trò chuyện với bạn', type: ActivityType.Custom }],
-            status: presenceStatuses[presenceIndex], // Cập nhật trạng thái
+            status: presenceStatuses[presenceIndex],
         });
-        presenceIndex = (presenceIndex + 1) % presenceStatuses.length; // Cập nhật chỉ số, quay lại đầu nếu vượt quá
+        presenceIndex = (presenceIndex + 1) % presenceStatuses.length;
     }, 30000); // Thay đổi trạng thái mỗi 30 giây
 });
 
