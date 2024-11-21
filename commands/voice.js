@@ -1,4 +1,5 @@
-const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
+const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
+const silence = require('silence-opus'); // Gói tạo âm thanh tĩnh
 
 module.exports = {
     name: 'voice',
@@ -9,12 +10,21 @@ module.exports = {
         if (message.content === '!join') {
             if (message.member.voice.channel) {
                 try {
-                    joinVoiceChannel({
+                    const connection = joinVoiceChannel({
                         channelId: message.member.voice.channel.id,
                         guildId: message.guild.id,
                         adapterCreator: message.guild.voiceAdapterCreator,
                     });
-                    message.reply('Đã tham gia voice channel!');
+
+                    // Tạo player để phát âm thanh tĩnh
+                    const player = createAudioPlayer();
+                    const resource = createAudioResource(silence()); // Tạo âm thanh tĩnh
+
+                    // Phát âm thanh tĩnh để giữ bot trong room
+                    player.play(resource);
+                    connection.subscribe(player);
+
+                    message.reply('Đã tham gia voice channel và sẽ không tự động rời khỏi channel.');
                 } catch (error) {
                     console.error('Lỗi khi tham gia voice channel:', error);
                     message.reply('Không thể tham gia voice channel, vui lòng thử lại.');
