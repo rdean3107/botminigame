@@ -1,62 +1,53 @@
 const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
-const fs = require('fs');
 const path = require('path');
 
 module.exports = {
     name: 'voice',
     description: 'Lệnh để bot tham gia và rời khỏi voice channel.',
 
-    async execute(message) {
-        // Lệnh "!join" để bot tham gia voice channel
-        if (message.content === '!join') {
-            if (message.member.voice.channel) {
-                try {
-                    const connection = joinVoiceChannel({
-                        channelId: message.member.voice.channel.id,
-                        guildId: message.guild.id,
-                        adapterCreator: message.guild.voiceAdapterCreator,
-                    });
+    async execute(message, action) {
+        // Kiểm tra nếu người dùng đang ở trong voice channel
+        const voiceChannel = message.member.voice.channel;
+        if (!voiceChannel) {
+            return message.reply('Bạn cần vào một voice channel trước!');
+        }
 
-                    // Tạo audio player và phát file âm thanh tĩnh
-                    const player = createAudioPlayer();
-                    const resource = createAudioResource(path.join(__dirname, 'silence.ogg'));
+        // Nếu lệnh là 'join', bot sẽ tham gia voice channel
+        if (action === 'join') {
+            try {
+                const connection = joinVoiceChannel({
+                    channelId: voiceChannel.id,
+                    guildId: message.guild.id,
+                    adapterCreator: message.guild.voiceAdapterCreator,
+                });
 
-                    player.play(resource);
-                    connection.subscribe(player);
+                // Tạo audio player và phát file âm thanh tĩnh
+                const player = createAudioPlayer();
+                const resource = createAudioResource(path.join(__dirname, 'silence.ogg')); // file âm thanh tĩnh
 
-                    // Tạo sự kiện để phát lại âm thanh tĩnh khi kết thúc
-                    player.on(AudioPlayerStatus.Idle, () => {
-                        player.play(createAudioResource(path.join(__dirname, 'silence.ogg')));
-                    });
+                player.play(resource);
+                connection.subscribe(player);
 
-                    message.reply('Đã tham gia voice channel và sẽ không tự động rời khỏi channel.');
-                } catch (error) {
-                    console.error('Lỗi khi tham gia voice channel:', error);
-                    message.reply('Không thể tham gia voice channel, vui lòng thử lại.');
-                }
-            } else {
-                message.reply('Bạn cần vào một voice channel trước!');
+                player.on(AudioPlayerStatus.Idle, () => {
+                    player.play(createAudioResource(path.join(__dirname, 'silence.ogg')));
+                });
+
+                message.reply('Đã tham gia voice channel và sẽ không tự động rời khỏi channel.');
+            } catch (error) {
+                console.error('Lỗi khi tham gia voice channel:', error);
+                message.reply('Không thể tham gia voice channel, vui lòng thử lại.');
             }
         }
-        // Lệnh "!leave" để bot rời khỏi voice channel
-        else if (message.content === '!leave') {
-            const voiceChannel = message.member.voice.channel;
-            if (voiceChannel) {
-                const connection = getVoiceConnection(message.guild.id);
-                if (connection) {
-                    try {
-                        connection.destroy();
-                        message.reply('Đã rời khỏi voice channel!');
-                    } catch (error) {
-                        console.error('Lỗi khi rời khỏi voice channel:', error);
-                        message.reply('Không thể rời khỏi voice channel, vui lòng thử lại.');
-                    }
-                } else {
-                    message.reply('Bot không ở trong voice channel nào.');
-                }
+        
+        // Nếu lệnh là 'leave', bot sẽ rời khỏi voice channel
+        else if (action === 'leave') {
+            const connection = getVoiceConnection(message.guild.id);
+            if (connection) {
+                connection.destroy();
+                message.reply('Đã rời khỏi voice channel!');
             } else {
-                message.reply('Bạn cần ở trong một voice channel để sử dụng lệnh này.');
+                message.reply('Bot không ở trong voice channel nào.');
             }
         }
-    },
+    }
 };
