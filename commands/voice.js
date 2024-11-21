@@ -11,25 +11,31 @@ module.exports = {
         if (message.content === '!join') {
             if (message.member.voice.channel) {
                 try {
+                    // Tham gia voice channel
                     const connection = joinVoiceChannel({
                         channelId: message.member.voice.channel.id,
                         guildId: message.guild.id,
                         adapterCreator: message.guild.voiceAdapterCreator,
                     });
 
-                    // Tạo audio player và phát file âm thanh tĩnh
+                    // Tạo audio player và âm thanh tĩnh
                     const player = createAudioPlayer();
-                    const resource = createAudioResource(path.join(__dirname, 'silence.ogg'));
+                    const resource = createAudioResource(path.join(__dirname, 'silence.ogg'), {
+                        inputType: 0, // Đảm bảo định dạng âm thanh tĩnh
+                    });
 
+                    // Phát âm thanh tĩnh ngay khi bot vào channel
                     player.play(resource);
                     connection.subscribe(player);
 
-                    // Tạo sự kiện để phát lại âm thanh tĩnh khi kết thúc
+                    // Lắng nghe khi player chuyển sang trạng thái Idle để phát lại âm thanh
                     player.on(AudioPlayerStatus.Idle, () => {
-                        player.play(createAudioResource(path.join(__dirname, 'silence.ogg')));
+                        const resource = createAudioResource(path.join(__dirname, 'silence.ogg'));
+                        player.play(resource);
                     });
 
                     message.reply('Đã tham gia voice channel và sẽ không tự động rời khỏi channel.');
+
                 } catch (error) {
                     console.error('Lỗi khi tham gia voice channel:', error);
                     message.reply('Không thể tham gia voice channel, vui lòng thử lại.');
@@ -38,6 +44,7 @@ module.exports = {
                 message.reply('Bạn cần vào một voice channel trước!');
             }
         }
+        
         // Lệnh "!leave" để bot rời khỏi voice channel
         else if (message.content === '!leave') {
             const voiceChannel = message.member.voice.channel;
@@ -45,7 +52,7 @@ module.exports = {
                 const connection = getVoiceConnection(message.guild.id);
                 if (connection) {
                     try {
-                        connection.destroy();
+                        connection.destroy(); // Rời khỏi voice channel
                         message.reply('Đã rời khỏi voice channel!');
                     } catch (error) {
                         console.error('Lỗi khi rời khỏi voice channel:', error);
