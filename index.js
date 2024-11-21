@@ -38,11 +38,11 @@ client.once(Events.ClientReady, async () => {
     console.log(`Bot đã sẵn sàng! Đăng nhập với tư cách: ${client.user.tag}`);
 
     // Thay đổi trạng thái hoạt động liên tục
-    let index = 0;
+    let activityIndex = 0;
     setInterval(() => {
-        const activity = activities[index];
+        const activity = activities[activityIndex];
         client.user.setActivity(activity.name, { type: activity.type, url: activity.url });
-        index = (index + 1) % activities.length;
+        activityIndex = (activityIndex + 1) % activities.length;
     }, 10000); // Thay đổi trạng thái mỗi 10 giây
 
     // Đặt trạng thái ban đầu
@@ -77,7 +77,12 @@ client.login(process.env.DISCORD_TOKEN);
 
 // Hàm để ghi cấu hình vào tệp JSON
 const writeConfig = () => {
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
+    try {
+        fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
+        console.log('Cấu hình đã được lưu thành công.');
+    } catch (error) {
+        console.error('Lỗi khi ghi tệp config.json:', error);
+    }
 };
 
 module.exports = { config, writeConfig }; // Xuất config và hàm ghi cấu hình
