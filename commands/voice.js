@@ -5,9 +5,11 @@ const path = require('path');
 module.exports = {
     name: 'voice',
     description: 'Lệnh để bot tham gia và rời khỏi voice channel.',
+    
+    // Tạo một đối tượng lưu trữ thông tin về voice channel mà bot đang tham gia
+    activeConnections: {},
 
     async execute(message, action) {
-        // Kiểm tra nếu người dùng đang ở trong voice channel
         const voiceChannel = message.member.voice.channel;
         if (!voiceChannel) {
             return message.reply('Bạn cần vào một voice channel trước!');
@@ -28,6 +30,9 @@ module.exports = {
         // Nếu lệnh là 'join', bot sẽ tham gia voice channel
         if (action === 'join') {
             try {
+                // Lưu thông tin voice channel vào activeConnections để bot có thể tham gia lại
+                this.activeConnections[message.guild.id] = voiceChannel.id;
+
                 const connection = joinVoiceChannel({
                     channelId: voiceChannel.id,
                     guildId: message.guild.id,
@@ -43,6 +48,14 @@ module.exports = {
 
                 player.on(AudioPlayerStatus.Idle, () => {
                     player.play(createAudioResource(silencePath)); // Phát lại âm thanh tĩnh mỗi khi âm thanh hiện tại kết thúc
+                });
+
+                connection.on('stateChange', (oldState, newState) => {
+                    // Kiểm tra nếu bot bị mất kết nối, và tham gia lại nếu bị mất
+                    if (newState.status === 'disconnected' || newState.status === 'destroyed') {
+                        console.log(`Bot bị mất kết nối khỏi voice channel. Đang thử tham gia lại...`);
+                        this.reconnectIfDisconnected(message.guild.id);
+                    }
                 });
 
                 message.reply('Bot đã tham gia voice channel và sẽ ở lại 24/7.');
@@ -66,11 +79,30 @@ module.exports = {
 
     // Hàm kiểm tra và tái kết nối bot nếu bị mất kết nối
     reconnectIfDisconnected(guildId) {
-        const connection = getVoiceConnection(guildId);
-        if (!connection) {
-            console.log('Bot đã bị mất kết nối, đang cố gắng kết nối lại...');
-            // Gửi yêu cầu tham gia lại nếu không có kết nối
-            // Bạn có thể bổ sung mã logic để bot tham gia lại voice channel ở đây
+        const voiceChannelId = this.activeConnections[guildId];
+        
+        if (!voiceChannelId) {
+            console.log('Không có thông tin về voice channel để tham gia lại.');
+            return;
+        }
+
+        // Kiểm tra nếu bot chưa tham gia channel và tham gia lại
+        const voiceChannel = getVoiceConnection(guildId);
+
+        if (!voiceChannel) {
+            console.log('Bot không còn kết nối, đang cố gắng tham gia lại...');
+            const guild = this.client.guilds.cache.get(guildId);
+            if (!guild) return;
+            const channel = guild.channels.cache.get(voiceChannelId);
+
+            if (channel) {
+                joinVoiceChannel({
+                    channelId: channel.id,
+                    guildId: guild.id,
+                    adapterCreator: guild.voiceAdapterCreator,
+                });
+                console.log('Bot đã tham gia lại voice channel.');
+            }
         }
     }
 };
