@@ -6,11 +6,8 @@ module.exports = {
     name: 'voice',
     description: 'Lệnh để bot tham gia và rời khỏi voice channel.',
 
-    async execute(message) {
-        const args = message.content.trim().split(/ +/g);
-        const command = args[0].toLowerCase();
-
-        if (command === '!join') {
+    async execute(message, action) {
+        if (action === 'join') {
             // Lệnh "!join" để bot tham gia voice channel
             if (message.member.voice.channel) {
                 try {
@@ -42,7 +39,7 @@ module.exports = {
             }
         } 
         
-        else if (command === '!leave') {
+        else if (action === 'leave') {
             // Lệnh "!leave" để bot rời khỏi voice channel
             const voiceChannel = message.member.voice.channel;
             if (voiceChannel) {
