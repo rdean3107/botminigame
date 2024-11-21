@@ -1,5 +1,6 @@
-const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
-const silence = require('silence-opus'); // Gói tạo âm thanh tĩnh
+const { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
     name: 'voice',
@@ -16,13 +17,17 @@ module.exports = {
                         adapterCreator: message.guild.voiceAdapterCreator,
                     });
 
-                    // Tạo player để phát âm thanh tĩnh
+                    // Tạo audio player và phát file âm thanh tĩnh
                     const player = createAudioPlayer();
-                    const resource = createAudioResource(silence()); // Tạo âm thanh tĩnh
+                    const resource = createAudioResource(path.join(__dirname, 'silence.ogg'));
 
-                    // Phát âm thanh tĩnh để giữ bot trong room
                     player.play(resource);
                     connection.subscribe(player);
+
+                    // Tạo sự kiện để phát lại âm thanh tĩnh khi kết thúc
+                    player.on(AudioPlayerStatus.Idle, () => {
+                        player.play(createAudioResource(path.join(__dirname, 'silence.ogg')));
+                    });
 
                     message.reply('Đã tham gia voice channel và sẽ không tự động rời khỏi channel.');
                 } catch (error) {
