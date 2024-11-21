@@ -47,11 +47,11 @@ const onMessageCreate = (message, config) => {
     }
     // Lệnh Join Voice Channel
     else if (args[0].toLowerCase() === `${prefix}join`) {
-        handleVoice.execute(message); // Gọi hàm execute từ voice.js với lệnh join
+        handleVoice.execute(message, 'join'); // Gọi hàm execute từ voice.js với lệnh join
     }
     // Lệnh Leave Voice Channel
     else if (args[0].toLowerCase() === `${prefix}leave`) {
-        handleVoice.execute(message); // Gọi hàm execute từ voice.js với lệnh leave
+        handleVoice.execute(message, 'leave'); // Gọi hàm execute từ voice.js với lệnh leave
     }
 };
 
