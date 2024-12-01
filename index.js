@@ -26,9 +26,9 @@ try {
 
 // Danh sách các trạng thái hoạt động
 const activities = [
-    { name: 'chơi với meo béo ', type: ActivityType.Playing },
-    { name: 'meo béo nhảy', type: ActivityType.Watching },
-    { name: 'meo béo hát', type: ActivityType.Listening },
+    { name: 'chơi game ', type: ActivityType.Playing },
+    { name: 'meo phim', type: ActivityType.Watching },
+    { name: 'nhạc', type: ActivityType.Listening },
     { name: 'trực tuyến', type: ActivityType.Streaming, url: 'https://discord.com/channels/1228364336142094387/1298926022514704384' },
 ];
 
