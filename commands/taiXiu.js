@@ -44,8 +44,13 @@ module.exports = async (message, isDitMe, isDuma) => {
 
                 await rollingMessage.edit(resultMessage);
 
-                // Thêm thời gian vào log
-                const timestamp = new Date().toLocaleString('vi-VN', { hour12: false }); // Thời gian theo định dạng 24 giờ
+                // Lấy thời gian hiện tại theo định dạng [hh:mm:ss dd/MM/yyyy]
+                const timestamp = new Date().toLocaleString('vi-VN', {
+                    hour12: false,
+                    timeZone: 'Asia/Ho_Chi_Minh'
+                }).replace(/(\d{2}:\d{2}:\d{2}) (\d{2})\/(\d{2})\/(\d{4})/, '[$1 $3/$2/$4]');
+                
+                // Tạo log message theo định dạng yêu cầu
                 const logMessage = `[${timestamp}] Lệnh bởi __${message.author.tag}__: Kết quả Tài Xỉu: ${finalResults.join(', ')} ${resultType} ${parity}`;
 
                 // Gửi log vào kênh riêng với thời gian
