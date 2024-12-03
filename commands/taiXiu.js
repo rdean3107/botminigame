@@ -6,7 +6,7 @@ const rollingTime = 2000;
 const emojis = {
     rolling: '<a:dicegame:1313437370040848445>',
     finished: '<a:lua:1313461231620853863>',
-    warning: '<a:canhbao:1302598129300013116>',
+    warning: '⚠️',
     rollingAnimation: '<a:lacdu:1313460032142049290>',
     separator: '<:kh_cham:1247581986181222531>'
 };
