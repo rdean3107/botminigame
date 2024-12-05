@@ -2,7 +2,7 @@ const { rollBauCua } = require('../utils');
 const { bauCuaEmojis } = require('../emojis');
 
 const allowedRoles = ['Lắc Bầu Cua', 'set host'];
-const rollingTime = 2000;
+const rollingTime = 2000;  // 2 giây mỗi lần lắc
 const emojis = {
     rolling: '<a:lacbaucua:1313456234388525096>',
     finished: '<a:lua:1313461231620853863>',
@@ -31,19 +31,25 @@ module.exports = async (message, isDitMe) => {
     isRolling = true; // Đặt trạng thái lệnh đang chạy
 
     try {
-        const initialMessage = await message.channel.send(`${emojis.rolling} ${emojis.rolling} ${emojis.rolling}`);
+        const initialMessage = await message.channel.send(`${emojis.rolling} ${emojis.rolling} ${emojis.rolling}`);  // Hiển thị quá trình lắc
         const rollingMessage = await message.channel.send(`**${emojis.rollingAnimation} Đang lắc...**`);
         const finalResults = [null, null, null];
 
+        // Lắc từng cục một, mỗi lần 2 giây
         for (let rollCount = 0; rollCount < 3; rollCount++) {
+            // Chờ 2 giây trước khi hiển thị mỗi cục lắc
+            await new Promise(resolve => setTimeout(resolve, rollingTime));
+
             finalResults[rollCount] = rollBauCua(isDitMe);
             const bauCuaEmojisString = finalResults
                 .map(result => result ? bauCuaEmojis[result] : emojis.rolling)
                 .join(' ');
+
+            // Cập nhật kết quả sau mỗi 2 giây
             await initialMessage.edit(bauCuaEmojisString);
-            await new Promise(resolve => setTimeout(resolve, rollingTime));
         }
 
+        // Cập nhật kết quả cuối cùng ngay lập tức sau khi tất cả đã lắc xong
         const resultsString = finalResults.join(emojis.separator);
         await rollingMessage.edit(`**${emojis.finished} ${resultsString} ${emojis.finished}**`);
 
@@ -52,7 +58,7 @@ module.exports = async (message, isDitMe) => {
             hour12: false, 
             timeZone: 'Asia/Ho_Chi_Minh'
         }).replace(/(\d{2}:\d{2}:\d{2}) (\d{2})\/(\d{2})\/(\d{4})/, '[$1 $3/$2/$4]');
-        
+
         // Chuyển tên emoji thành tên chữ tương ứng (ví dụ: "cua", "tom", ...)
         const resultNames = finalResults.map(result => {
             if (result !== null) {
