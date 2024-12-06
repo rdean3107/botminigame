@@ -8,7 +8,7 @@ module.exports = {
     description: 'Tạo trò chơi tài xỉu với danh sách người tham gia và đặt cược.',
     execute: async (message) => {
         if (gameActive) {
-            return message.reply('Lệnh tham gia đang được khởi tạo, vui lòng khởi tạo lại khi lệnh tham kết thúc.');
+            return message.reply('Lệnh tham gia đang được khởi tạo, vui lòng khởi tạo lại khi lệnh tham gia kết thúc.');
         }
 
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
@@ -63,6 +63,7 @@ module.exports = {
                 // Sau khi hết thời gian, chỉ cập nhật thông báo đếm ngược mà không cần thông báo kết thúc.
                 await countdownMessage.edit("<a:emoji_57:1284871363034611742> Thời gian tham gia đã kết thúc!");
                 await gameMessage.edit({ components: [] }); // Hủy các nút khi hết thời gian
+                gameActive = false; // Đặt lại trạng thái trò chơi sau khi kết thúc
             } else {
                 await countdownMessage.edit(`<a:emoji_57:1284871363034611742> Thời gian tham gia: ${countdown}s`);
                 countdown--;
@@ -94,7 +95,7 @@ module.exports = {
                     new ActionRowBuilder().addComponents(
                         new TextInputBuilder()
                             .setCustomId('bet_choice')
-                            .setLabel('Chọn Tài, Xỉu hoặc Bầu, Cua, Tôm, Cá, Gà, Nai')
+                            .setLabel('Chọn Tài, Xỉu, Chẵn, Lẻ hoặc Bầu, Cua...')
                             .setStyle(TextInputStyle.Short)
                             .setRequired(true),
                     ),
@@ -111,7 +112,7 @@ module.exports = {
             const betChoice = interaction.fields.getTextInputValue('bet_choice').trim().toLowerCase();
 
             // Kiểm tra lựa chọn hợp lệ
-            const validChoices = ['tài', 'xỉu', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
+            const validChoices = ['tài', 'xỉu', 'chẵn', 'lẻ', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
             if (!validChoices.includes(betChoice)) {
                 return interaction.reply({ content: 'Lựa chọn không hợp lệ. Bạn chỉ có thể chọn "Tài", "Xỉu", hoặc "Bầu", "Cua", "Tôm", "Cá", "Gà", "Nai".', ephemeral: true });
             }
