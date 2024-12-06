@@ -78,7 +78,7 @@ module.exports = {
             const { user } = interaction;
             if (participants.has(user.id)) {
                 const replyMessage = await interaction.reply({ content: 'Bạn đã tham gia trò chơi rồi!', ephemeral: true });
-                setTimeout(() => replyMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+                setTimeout(() => replyMessage.delete(), 3000); // Xóa tin nhắn sau 10 giây
                 return;
             }
 
@@ -89,7 +89,7 @@ module.exports = {
                 ephemeral: true,
             });
 
-            setTimeout(() => replyMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+            setTimeout(() => replyMessage.delete(), 3000); // Xóa tin nhắn sau 10 giây
 
             // Thu thập câu trả lời của người chơi
             const collected = await message.channel.awaitMessages({
@@ -104,7 +104,7 @@ module.exports = {
 
             if (betParts.length !== 2) {
                 const errorMessage = await interaction.followUp({ content: 'Định dạng không đúng. Vui lòng nhập đúng cú pháp: "Số tiền cược Loại cược" (ví dụ: "200 tài").', ephemeral: true });
-                setTimeout(() => errorMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+                setTimeout(() => errorMessage.delete(), 3000); // Xóa tin nhắn sau 10 giây
                 return;
             }
 
@@ -114,7 +114,7 @@ module.exports = {
             // Kiểm tra số tiền cược hợp lệ
             if (isNaN(betAmount) || betAmount <= 0) {
                 const errorMessage = await interaction.followUp({ content: 'Số tiền cược không hợp lệ!', ephemeral: true });
-                setTimeout(() => errorMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+                setTimeout(() => errorMessage.delete(), 3000); // Xóa tin nhắn sau 10 giây
                 return;
             }
 
@@ -122,7 +122,7 @@ module.exports = {
             const validChoices = ['tài', 'xỉu', 'lẻ', 'chẵn', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
             if (!validChoices.includes(betChoice)) {
                 const errorMessage = await interaction.followUp({ content: 'Lựa chọn cược không hợp lệ! Vui lòng chọn một trong các loại: tài, xỉu, lẻ, chẵn, bầu, cua, tôm, cá, gà, nai.', ephemeral: true });
-                setTimeout(() => errorMessage.delete(), 5000); // Xóa tin nhắn sau 10 giây
+                setTimeout(() => errorMessage.delete(), 3000); // Xóa tin nhắn sau 10 giây
                 return;
             }
 
