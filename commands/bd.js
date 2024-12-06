@@ -1,4 +1,4 @@
-const { PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 let gameActive = false; // Trạng thái trò chơi
 let participants = new Map(); // Cập nhật lại danh sách người tham gia mỗi khi trò chơi mới bắt đầu
@@ -8,7 +8,7 @@ module.exports = {
     description: 'Tạo trò chơi tài xỉu với danh sách người tham gia và đặt cược.',
     execute: async (message) => {
         if (gameActive) {
-            return message.reply('Lệnh tham gia đang được khởi tạo, vui lòng khởi tạo lại khi lệnh tham gia kết thúc.');
+            return message.reply('Lệnh tham gia đang được khởi tạo, vui lòng khởi tạo lại khi lệnh tham kết thúc.');
         }
 
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
@@ -77,63 +77,63 @@ module.exports = {
 
             const { user } = interaction;
             if (participants.has(user.id)) {
-                return interaction.reply({ content: 'Bạn đã tham gia trò chơi rồi!', ephemeral: true });
+                const replyMessage = await interaction.reply({ content: 'Bạn đã tham gia trò chơi rồi!', ephemeral: true });
+                setTimeout(() => replyMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+                return;
             }
 
-            // Hiển thị Modal để đặt cược
-            const betModal = new ModalBuilder()
-                .setCustomId('bet_modal')
-                .setTitle('Đặt cược')
-                .addComponents(
-                    new ActionRowBuilder().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('bet_amount')
-                            .setLabel('Số tiền cược')
-                            .setStyle(TextInputStyle.Short)
-                            .setRequired(true),
-                    ),
-                    new ActionRowBuilder().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('bet_choice')
-                            .setLabel('Chọn Tài, Xỉu, Chẵn, Lẻ hoặc Bầu, Cua...')
-                            .setStyle(TextInputStyle.Short)
-                            .setRequired(true),
-                    ),
-                );
+            // Yêu cầu người chơi nhập thông tin cược (số tiền và lựa chọn)
+            const filter = (response) => response.author.id === user.id;
+            const replyMessage = await interaction.reply({
+                content: 'Vui lòng nhập số tiền cược và loại cược (ví dụ: "200 tài", "400 xỉu", "1000 bầu", "300 cua",...)',
+                ephemeral: true,
+            });
 
-            await interaction.showModal(betModal);
-        });
+            setTimeout(() => replyMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
 
-        // Lắng nghe các Modal Submit
-        message.client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isModalSubmit() || interaction.customId !== 'bet_modal') return;
+            // Thu thập câu trả lời của người chơi
+            const collected = await message.channel.awaitMessages({
+                filter,
+                max: 1,
+                time: 30000, // Thời gian chờ 30 giây
+                errors: ['time'],
+            });
 
-            const { user } = interaction;
-            const betAmount = interaction.fields.getTextInputValue('bet_amount');
-            const betChoice = interaction.fields.getTextInputValue('bet_choice').trim().toLowerCase();
+            const betMessage = collected.first().content.trim().toLowerCase();
+            const betParts = betMessage.split(' ');
 
-            // Kiểm tra lựa chọn hợp lệ
-            const validChoices = ['tài', 'xỉu', 'chẵn', 'lẻ', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
-            if (!validChoices.includes(betChoice)) {
-                return interaction.reply({ content: 'Lựa chọn không hợp lệ. Bạn chỉ có thể chọn "Tài", "Xỉu", "Chẵn", "Lẻ", "Bầu", "Cua", "Tôm", "Cá", "Gà", "Nai".', ephemeral: true });
+            if (betParts.length !== 2) {
+                const errorMessage = await interaction.followUp({ content: 'Định dạng không đúng. Vui lòng nhập đúng cú pháp: "Số tiền cược Loại cược" (ví dụ: "200 tài").', ephemeral: true });
+                setTimeout(() => errorMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+                return;
             }
+
+            const betAmount = parseInt(betParts[0], 10);
+            const betChoice = betParts[1];
 
             // Kiểm tra số tiền cược hợp lệ
-            const parsedBet = parseInt(betAmount, 10);
-            if (isNaN(parsedBet) || parsedBet <= 0) {
-                return interaction.reply({ content: 'Số tiền cược không hợp lệ!', ephemeral: true });
+            if (isNaN(betAmount) || betAmount <= 0) {
+                const errorMessage = await interaction.followUp({ content: 'Số tiền cược không hợp lệ!', ephemeral: true });
+                setTimeout(() => errorMessage.delete(), 10000); // Xóa tin nhắn sau 10 giây
+                return;
             }
 
-            // Lưu người tham gia và đặt cược
-            participants.set(user.id, { username: user.id, bet: parsedBet, choice: betChoice });
+            // Kiểm tra loại cược hợp lệ
+            const validChoices = ['tài', 'xỉu', 'lẻ', 'chẵn', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
+            if (!validChoices.includes(betChoice)) {
+                const errorMessage = await interaction.followUp({ content: 'Lựa chọn cược không hợp lệ! Vui lòng chọn một trong các loại: tài, xỉu, lẻ, chẵn, bầu, cua, tôm, cá, gà, nai.', ephemeral: true });
+                setTimeout(() => errorMessage.delete(), 5000); // Xóa tin nhắn sau 10 giây
+                return;
+            }
 
-            // Cập nhật danh sách người tham gia
+            // Lưu người tham gia và cược
+            participants.set(user.id, { username: user.id, bet: betAmount, choice: betChoice });
+
+            // Cập nhật danh sách người tham gia và tag người chơi vào embed
             await gameMessage.edit({ embeds: [introEmbed, updateParticipantEmbed()] });
 
-            // Đảm bảo chỉ deferUpdate một lần và tránh lỗi Interaction đã được xử lý
-            if (!interaction.replied) {
-                await interaction.deferUpdate();
-            }
+            // Xóa tin nhắn nhập cược sau khi xử lý xong
+            await collected.first().delete();
         });
     },
 };
