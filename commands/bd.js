@@ -104,6 +104,7 @@ module.exports = {
             await interaction.showModal(betModal);
         });
 
+        // Lắng nghe các Modal Submit
         message.client.on('interactionCreate', async (interaction) => {
             if (!interaction.isModalSubmit() || interaction.customId !== 'bet_modal') return;
 
@@ -114,7 +115,7 @@ module.exports = {
             // Kiểm tra lựa chọn hợp lệ
             const validChoices = ['tài', 'xỉu', 'chẵn', 'lẻ', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
             if (!validChoices.includes(betChoice)) {
-                return interaction.reply({ content: 'Lựa chọn không hợp lệ. Bạn chỉ có thể chọn "Tài", "Xỉu", hoặc "Bầu", "Cua", "Tôm", "Cá", "Gà", "Nai".', ephemeral: true });
+                return interaction.reply({ content: 'Lựa chọn không hợp lệ. Bạn chỉ có thể chọn "Tài", "Xỉu", "Chẵn", "Lẻ", "Bầu", "Cua", "Tôm", "Cá", "Gà", "Nai".', ephemeral: true });
             }
 
             // Kiểm tra số tiền cược hợp lệ
@@ -128,7 +129,11 @@ module.exports = {
 
             // Cập nhật danh sách người tham gia
             await gameMessage.edit({ embeds: [introEmbed, updateParticipantEmbed()] });
-            await interaction.deferUpdate();
+
+            // Đảm bảo chỉ deferUpdate một lần và tránh lỗi Interaction đã được xử lý
+            if (!interaction.replied) {
+                await interaction.deferUpdate();
+            }
         });
     },
 };
