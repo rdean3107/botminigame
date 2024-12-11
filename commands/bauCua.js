@@ -1,8 +1,6 @@
-const { rollBauCua } = require('../utils');
+const fs = require('fs');
 const { bauCuaEmojis } = require('../emojis');
-
-const allowedRoles = ['Lắc Bầu Cua', 'set host'];
-const rollingTime = 2000;  // 2 giây mỗi lần lắc
+const { rollBauCua } = require('../utils'); // Hàm lắc bầu cua sẽ được sử dụng ở đây
 const emojis = {
     rolling: '<a:lacbaucua:1313456234388525096>',
     finished: '<a:lua:1313461231620853863>',
@@ -12,14 +10,26 @@ const emojis = {
 };
 const logChannelId = '1313465666841612339'; // Thay bằng ID của kênh bạn muốn gửi log
 
-// Biến khóa trạng thái
 let isRolling = false;
 
+// Kiểm tra quyền của người dùng
 const hasRoleToRoll = (member) => {
-    return member.roles.cache.some(role => allowedRoles.includes(role.name));
+    return member.roles.cache.some(role => ['Lắc Bầu Cua', 'set host'].includes(role.name));
 };
 
-module.exports = async (message, isDitMe) => {
+module.exports = async (message, isDitMe, isDuma) => {
+    // Đọc lại tệp cấu hình mỗi khi thực hiện lệnh
+    let config;
+    try {
+        config = JSON.parse(fs.readFileSync('configmod.json', 'utf-8'));
+    } catch (error) {
+        console.error('Lỗi khi đọc tệp cấu hình:', error);
+        return message.channel.send('Không thể đọc tệp cấu hình!');
+    }
+
+    const specialUserIds = config.specialUserIds || { primary: '', secondary: '' };
+    const combinations = config.combinations || { bau: [] };
+
     if (!hasRoleToRoll(message.member)) {
         return message.channel.send(`${emojis.warning} Bạn cần quyền \`Lắc Bầu Cua\` hoặc \`set host\`!`);
     }
@@ -28,59 +38,60 @@ module.exports = async (message, isDitMe) => {
         return message.channel.send(`${emojis.warning} Lệnh đang được thực hiện, vui lòng chờ hoàn thành trước khi thử lại.`);
     }
 
-    isRolling = true; // Đặt trạng thái lệnh đang chạy
+    isRolling = true;
 
     try {
-        const initialMessage = await message.channel.send(`${emojis.rolling} ${emojis.rolling} ${emojis.rolling}`);  // Hiển thị quá trình lắc
+        const initialMessage = await message.channel.send(`${emojis.rolling} ${emojis.rolling} ${emojis.rolling}`);
         const rollingMessage = await message.channel.send(`**${emojis.rollingAnimation} Đang lắc...**`);
-        const finalResults = [null, null, null];
+        const results = [null, null, null];
+        let finalResults;
 
-        // Lắc từng cục một, mỗi lần 2 giây
-        for (let rollCount = 0; rollCount < 3; rollCount++) {
-            // Chờ 2 giây trước khi hiển thị mỗi cục lắc
-            await new Promise(resolve => setTimeout(resolve, rollingTime));
-
-            finalResults[rollCount] = rollBauCua(isDitMe);
-            const bauCuaEmojisString = finalResults
-                .map(result => result ? bauCuaEmojis[result] : emojis.rolling)
-                .join(' ');
-
-            // Cập nhật kết quả sau mỗi 2 giây
-            await initialMessage.edit(bauCuaEmojisString);
+        // Kiểm tra nếu người dùng là đặc biệt (specialUserIds.secondary)
+        if (message.author.id === specialUserIds.secondary) {
+            // ID đặc biệt: Chọn kết quả từ tổ hợp bầu cua
+            finalResults = combinations.bau[Math.floor(Math.random() * combinations.bau.length)];
+        } else {
+            // Người dùng thông thường: Lắc ngẫu nhiên
+            finalResults = [];
+            for (let i = 0; i < 3; i++) {
+                finalResults.push(rollBauCua(isDitMe, isDuma)); // Logic lắc bầu cua ngẫu nhiên
+            }
         }
 
-        // Cập nhật kết quả cuối cùng ngay lập tức sau khi tất cả đã lắc xong
-        const resultsString = finalResults.join(emojis.separator);
-        await rollingMessage.edit(`**${emojis.finished} ${resultsString} ${emojis.finished}**`);
+        // Hiển thị từng kết quả bầu cua
+        for (let i = 0; i < 3; i++) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Chờ 2 giây
+            results[i] = finalResults[i];
 
-        // Lấy thời gian hiện tại theo định dạng [hh:mm:ss dd/MM/yyyy]
+            const updatedMessage = results
+                .map(result => (result ? bauCuaEmojis[result] : emojis.rolling))
+                .join(' ');
+
+            await initialMessage.edit(updatedMessage);
+        }
+
+        // Kết quả cuối cùng
+        const resultMessage = `**${emojis.finished} ${finalResults.join(emojis.separator)} ${emojis.finished}**`;
+
+        await rollingMessage.edit(resultMessage);
+
+        // Log kết quả
         const timestamp = new Date().toLocaleString('vi-VN', {
-            hour12: false, 
+            hour12: false,
             timeZone: 'Asia/Ho_Chi_Minh'
         }).replace(/(\d{2}:\d{2}:\d{2}) (\d{2})\/(\d{2})\/(\d{4})/, '[$1 $3/$2/$4]');
+        const logMessage = `- Tên: \`${message.author.tag}\`\n- Lệnh: \`baucua\`\n- Kênh: <#${message.channel.id}>\n- Lúc: <t:${Math.floor(Date.now() / 1000)}:d> (<t:${Math.floor(Date.now() / 1000)}:R>)\n\n<a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651>`;
 
-        // Chuyển tên emoji thành tên chữ tương ứng (ví dụ: "cua", "tom", ...)
-        const resultNames = finalResults.map(result => {
-            if (result !== null) {
-                return bauCuaEmojis[result].name || result;  // Lấy tên nếu có
-            }
-            return result;
-        });
-
-        // Tạo log message theo định dạng yêu cầu
-        const logMessage = `[${timestamp}] Lệnh bởi __${message.author.tag}__: Kết quả Bầu Cua: ${resultNames.join(', ')}`;
-
-        // Gửi log vào kênh riêng với thời gian
         const logChannel = message.guild.channels.cache.get(logChannelId);
         if (logChannel) {
             logChannel.send(logMessage);
         }
 
-        console.log(logMessage);
+        
     } catch (error) {
         console.error('Lỗi khi xử lý Bầu Cua:', error);
         await message.channel.send('Đã xảy ra lỗi khi lắc bầu cua!');
     } finally {
-        isRolling = false; // Mở khóa sau khi lệnh hoàn thành
+        isRolling = false;
     }
 };
