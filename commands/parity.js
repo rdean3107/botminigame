@@ -37,8 +37,13 @@ const updateCombinations = (type, values, message) => {
             return message.channel.send('Lỗi: Cần cung cấp chính xác 3 giá trị cho tổ hợp Xíu (ví dụ: "1 2 3").');
         }
 
-        // Chuyển các giá trị thành số và lưu vào mảng
+        // Chuyển các giá trị thành số và kiểm tra giá trị từ 1 đến 6
         updatedCombination = values.map(value => parseInt(value, 10));
+
+        if (updatedCombination.some(value => isNaN(value) || value < 1 || value > 6)) {
+            return message.channel.send('Lỗi: Tất cả các giá trị của tổ hợp Xíu phải nằm trong khoảng từ 1 đến 6.');
+        }
+
         config.combinations[type] = [updatedCombination];
     } else if (type === 'bau' || type === 'cua') {
         // Kiểm tra số lượng giá trị, chỉ cho phép 3 giá trị hợp lệ
