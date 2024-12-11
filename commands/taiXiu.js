@@ -8,7 +8,7 @@ const emojis = {
     rolling: '<a:dicegame:1313437370040848445>',
     finished: '<a:lua:1313461231620853863>',
     warning: '⚠️',
-    rollingAnimation: '<a:lacdu:1313460032142049290>',
+    rollingAnimation: '<a:6026bunnycrazy:1289625218763063367>',
     separator: '<:kh_cham:1247581986181222531>'
 };
 const logChannelId = '1313465666841612339';
