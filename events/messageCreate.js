@@ -8,6 +8,7 @@ const handleMath = require('../commands/math');
 const handleGiveAway = require('../commands/giveaway');
 const handleVoice = require('../commands/voice');
 const handleBd = require('../commands/bd');
+const handleParity = require('../commands/parity');  // Thêm lệnh parity
 
 // Bảng ánh xạ lệnh và hàm xử lý
 const commandHandlers = {
@@ -21,6 +22,7 @@ const commandHandlers = {
     join: (message, args) => handleVoice.execute(message, 'join'),
     leave: (message, args) => handleVoice.execute(message, 'leave'),
     bd: handleBd,
+    p: handleParity,  // Thêm lệnh parity với prefix 'p'
 };
 
 const onMessageCreate = (message, config) => {
@@ -39,6 +41,15 @@ const onMessageCreate = (message, config) => {
     if (!commandHandlers[command]) return; // Bỏ qua nếu lệnh không tồn tại
 
     try {
+        // Kiểm tra và xử lý các lệnh đặc biệt, bao gồm lệnh parity
+        if (command === 'p') {
+            // Đảm bảo rằng args đã có đủ các tham số cần thiết cho các lệnh parity
+            if (args.length < 2) {
+                return message.reply('may lam gi the');
+            }
+            return commandHandlers[command](message, args.slice(1)); // Gọi lệnh parity với các tham số bổ sung
+        }
+
         // Chuyển đối số bổ sung cho từng lệnh cụ thể
         if (command === 'tx') {
             return commandHandlers[command](message, isDitMe, isDuma);
