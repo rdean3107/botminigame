@@ -1,196 +1,238 @@
-const { PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { PermissionsBitField, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 
-let gameActive = false; // Trạng thái trò chơi
-let participants = new Map(); // Cập nhật lại danh sách người tham gia mỗi khi trò chơi mới bắt đầu
+// Danh sách toàn cầu lưu trữ người tham gia
+let globalParticipants = new Map();
 
+// Các emoji được sử dụng trong trò chơi
 const emojis = [
-    '<a:1317knifeduck:1282378375045971988>',
-    '<a:1030471081833812068ezgif:1313459874331492363>',
-    '<a:2653kittypaw:1281794652630155326>',
-    '<a:3064meongdrink:1289610165829763093>',
-    '<a:3534_Dance_HK:1289625183199559793>',
-    '<a:4221bobacat:1281774359299625095>',
-    '<a:5473pianojump:1289610278144708649>',
-    '<a:6026bunnycrazy:1289625218763063367>',
-    '<a:6540hellokittybow:1289625220767809549>',
-    '<a:emoji_54:1284871280570662952>',
-    '<a:emoji_53:1284871154997137460>',
-    '<a:meongfacetable70:1285599349241544830>',
-    '<a:rgshybunnycute:1285599402425188432>',
-    '<a:rose_bearsleep:1285599405965054056>',
+    "<a:1317knifeduck:1282378375045971988>", "<a:1030471081833812068ezgif:1313459874331492363>",
+    "<a:2653kittypaw:1281794652630155326>", "<a:3064meongdrink:1289610165829763093>", "<a:3534_Dance_HK:1289625183199559793>",
+    "<a:4221bobacat:1281774359299625095>", "<a:5473pianojump:1289610278144708649>", "<a:6026bunnycrazy:1289625218763063367>",
+    "<a:6540hellokittybow:1289625220767809549>", "<a:emoji_54:1284871280570662952>", "<a:emoji_53:1284871154997137460>",
+    "<a:meongfacetable70:1285599349241544830>", "<a:rgshybunnycute:1285599402425188432>", "<a:rose_bearsleep:1285599405965054056>"
 ];
 
-// Mảng các màu pastel đậm nhạt
-const pastelColors = [
-   0xA1C6D7, // Pastel blue
-    0x7A9BBA, // Light pastel blue
-    0xA1D98C, // Pastel green
-    0xFF7F8B, // Light pastel pink
-    0xFF9A9A, // Light pastel red
-    0xFFE16A, // Pastel yellow
-];
+// Mảng màu pastel ngẫu nhiên dùng để tạo màu cho embed
+const pastelColors = [ 0xff7f8b];
+const randomPastelColor = () => pastelColors[Math.floor(Math.random() * pastelColors.length)];
 
-const randomPastelColor = () => {
-    return pastelColors[Math.floor(Math.random() * pastelColors.length)];
+// Các quy tắc tính toán kết quả của các cược
+const outcomeRules = {
+    "tài lẻ": { "tài lẻ": 1, "xỉu chẵn": -1, "tài chẵn": 0, "xỉu lẻ": 0},
+    "tài chẵn": { "tài chẵn": 1, "xỉu lẻ": -1, "tài lẻ": 0, "xỉu chẵn":0},
+    "xỉu lẻ": { "xỉu lẻ": 1, "tài chẵn": -1, "tài lẻ": 0, "xỉu chẵn ": 0 },
+    "xỉu chẵn": { "xỉu chẵn": 1, "tài lẻ": -1, "xỉu lẻ": 0, "tài chẵn": 0 },
+    tài: { tài: 1, "tài lẻ": 1, "tài chẵn": 1, xỉu: -1, "xỉu lẻ": -1, "xỉu chẵn": -1 },
+    xỉu: { xỉu: 1, "xỉu lẻ": 1, "xỉu chẵn": 1, tài: -1, "tài lẻ": -1, "tài chẵn": -1 },
+    lẻ: { lẻ: 1, "tài lẻ": 1, "tài chẵn": -1, chẵn: -1, "xỉu lẻ": 1, "xỉu chẵn": -1 },
+    chẵn: { chẵn: 1, "xỉu lẻ": -1, "xỉu chẵn": 1, lẻ: -1, "tài lẻ": -1, "tài chẵn": 1 },
+    bầu: { bầu: 1, cua: -1, tôm: -1, cá: -1, gà: -1, nai: -1 },
+    cua: { cua: 1, bầu: -1, tôm: -1, cá: -1, gà: -1, nai: -1 },
+    tôm: { tôm: 1, bầu: -1, cua: -1, cá: -1, gà: -1, nai: -1 },
+    cá: { cá: 1, bầu: -1, cua: -1, tôm: -1, gà: -1, nai: -1 },
+    gà: { gà: 1, bầu: -1, cua: -1, tôm: -1, cá: -1, nai: -1 },
+    nai: { nai: 1, bầu: -1, cua: -1, tôm: -1, cá: -1, gà: -1 },
 };
 
 module.exports = {
-    name: 'playgame',
-    description: 'Tạo trò chơi tài xỉu với danh sách người tham gia và đặt cược.',
+    name: "playgame",
+    description: "Tạo trò chơi tài xỉu với danh sách người tham gia và đặt cược.",
     execute: async (message) => {
-        if (gameActive) {
-            return message.reply('Lệnh tham gia đang được khởi tạo, vui lòng thử lại sau khi kết thúc lệnh hiện tại.');
-        }
-
+        // Kiểm tra quyền của người sử dụng
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
-            return message.reply('Bạn cần quyền quản lý tin nhắn để sử dụng lệnh này.');
+            return message.reply({ content: "Bạn cần quyền quản lý tin nhắn để sử dụng lệnh này.", ephemeral: true });
         }
 
-        // Đánh dấu trò chơi bắt đầu và thiết lập lại danh sách người tham gia
-        gameActive = true;
-        participants = new Map();  // Đặt lại danh sách người tham gia khi bắt đầu trò chơi mới
+        // Biến trạng thái trò chơi
+        let gameActive = true; // Trò chơi bắt đầu, mặc định là đang chơi
+        let participants = globalParticipants.size > 0 ? globalParticipants : new Map();
 
-        // Cập nhật danh sách người tham gia
+        // Hàm cập nhật danh sách người tham gia
         const updateParticipantEmbed = () => {
-            const participantList = Array.from(participants.values())
-                .map(({ username, choice, bet }) => `${emojis[Math.floor(Math.random() * emojis.length)]} <@${username}> cược **${bet}** vào **${choice.toUpperCase()}**.`)
-                .join('\n');
+            const participantList = Array.from(participants.values()).map(
+                ({ username, balance, choice = "", bet = 0 }) =>
+                    `${emojis[Math.floor(Math.random() * emojis.length)]} <@${username}> - Số dư: **${balance}** - Cược: **${bet}** vào **${choice.toUpperCase() || "Chưa chọn"}**`
+            ).join("\n");
 
             return new EmbedBuilder()
-                .setTitle('🎮 Danh sách người tham gia')
-                .setDescription(participantList || 'Chưa có ai tham gia! Hãy tham gia ngay nào!')
-                .setColor(randomPastelColor())  // Random màu pastel cho embed
+                .setTitle("🎮 Danh sách người chơi")
+                .setDescription(participantList || "Chưa có ai tham gia! Hãy tham gia ngay nào!")
+                .setColor(randomPastelColor())
                 .setFooter({ text: `Người tạo: ${message.author.tag}` })
-                .setTimestamp()
-                .setThumbnail('https://cdn.discordapp.com/attachments/1284728005012361276/1314621830933381142/image.png?ex=6754707c&is=67531efc&hm=a45c0a4832a3f38dd27588b746c3fbf17a2b6a5486e104d87c3dd88eb5ad3c9f&')
+                .setTimestamp();
         };
 
-        // Embed giới thiệu trò chơi với chú thích và emoji ngẫu nhiên
+        // Gửi lời mời tham gia trò chơi
         const introEmbed = new EmbedBuilder()
-            .setTitle('🎮 **Tham gia trò chơi ngay!**')
-            .setDescription(`${emojis[Math.floor(Math.random() * emojis.length)]} **Bấm vào nút "Tham gia" dưới đây** để tham gia trò chơi và đặt cược ngay!\n\nChúc bạn may mắn!`)
-            .setColor(randomPastelColor())  // Random màu pastel cho embed
-            .setThumbnail(message.guild.iconURL())  // Thumbnail là avatar của server
+            .setTitle("🎮 **Tham gia trò chơi ngay!**")
+            .setDescription(
+                `${emojis[Math.floor(Math.random() * emojis.length)]} **Bấm vào nút "Tham gia" dưới đây** để tham gia trò chơi và đặt cược ngay!\n\n**Các loại cược có sẵn**:\n\n- Tài Xỉu: **Tài** hoặc **Xỉu**\n- Tài Xỉu Chẵn Lẻ: **Tài Chẵn**, **Tài Lẻ**, **Xỉu Chẵn**, **Xỉu Lẻ**\n- Bầu Cua Tôm Cá Gà Nai: **Bầu**, **Cua**, **Tôm**, **Cá**, **Gà**, **Nai**\n\nChúc bạn may mắn!`,
+            )
+            .setColor(randomPastelColor())
             .setFooter({ text: `Người tạo: ${message.author.tag}` })
             .setTimestamp();
 
-        const joinButton = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('join_game')
-                .setLabel('Tham gia ngay!')
-                .setStyle(ButtonStyle.Secondary)  // Màu xanh lá cây
-                .setEmoji('🎮')
+        // Tạo các nút bấm để tham gia trò chơi hoặc kết thúc trò chơi
+        const actionRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId("join_game").setLabel("Tham gia ngay!").setStyle(ButtonStyle.Secondary).setEmoji("<a:7087pinkpandawave:1289625225130020936>"),
+            new ButtonBuilder().setCustomId("end_game").setLabel("Kết thúc").setStyle(ButtonStyle.Secondary).setEmoji("<a:rgshybunnycute:1285599402425188432>"),
+            new ButtonBuilder().setCustomId("set_balance").setLabel("Set Số Dư").setStyle(ButtonStyle.Secondary).setEmoji("<:money:1315658278688129084>") // Nút Set Số Dư
         );
 
-        const gameMessage = await message.channel.send({
-            embeds: [introEmbed],
-            components: [joinButton],
-        });
+        // Gửi thông báo mời tham gia trò chơi
+        let gameMessage = await message.channel.send({ embeds: [introEmbed], components: [actionRow] });
 
-        const countdownMessage = await message.channel.send("<a:emoji_57:1284871363034611742> **Thời gian tham gia**: 60s");
+        const collector = gameMessage.createMessageComponentCollector({ time: 0 });
 
-        let countdown = 60; // Thời gian đếm ngược bắt đầu từ 60 giây
-
-        // Hàm để cập nhật thời gian đếm ngược
-        const updateCountdown = setInterval(async () => {
-            if (countdown === 0) {
-                clearInterval(updateCountdown);
-                // Sau khi hết thời gian, chỉ cập nhật thông báo đếm ngược mà không cần thông báo kết thúc.
-                await countdownMessage.edit("<a:emoji_57:1284871363034611742> **Thời gian tham gia đã kết thúc!**");
-                await gameMessage.edit({ components: [] }); // Hủy các nút khi hết thời gian
-                gameActive = false; // Đặt lại trạng thái trò chơi sau khi kết thúc
-
-                // Xóa tất cả các embed cũ
-                await gameMessage.delete();
-
-                // Tạo một tin nhắn mới để chỉ chứa danh sách người tham gia
-                await message.channel.send({ embeds: [updateParticipantEmbed()] });
-
-            } else {
-                await countdownMessage.edit(`<a:emoji_57:1284871363034611742> **Thời gian tham gia**: ${countdown}s`);
-                countdown--;
-            }
-        }, 1000); // Cập nhật mỗi giây
-
-        const collector = gameMessage.createMessageComponentCollector({ time: 60000 });
-
-        collector.on('collect', async (interaction) => {
-            if (!interaction.isButton() || interaction.customId !== 'join_game') return;
-
+        // Xử lý khi có người tham gia hoặc kết thúc trò chơi
+        collector.on("collect", async (interaction) => {
             const { user } = interaction;
-            if (participants.has(user.id)) {
-                const reply = await interaction.reply({ content: 'Bạn đã tham gia trò chơi rồi!', ephemeral: true });
-
-                // Xóa tin nhắn sau 5 đến 8 giây
-                const randomTimeout = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;  // Từ 5000ms đến 8000ms
-                setTimeout(() => reply.delete(), randomTimeout);
-                return;
+        
+            if (interaction.customId === "join_game") {
+                if (!gameActive) {
+                    return interaction.reply({ content: "Trò chơi đã kết thúc. Không thể tham gia nữa.", ephemeral: true });
+                }
+        
+                if (!participants.has(user.id)) {
+                    participants.set(user.id, { username: user.id, balance: 0, choice: "", bet: 0 });
+                }
+        
+                // Cập nhật danh sách người chơi
+                await gameMessage.edit({ embeds: [introEmbed, updateParticipantEmbed()], components: [actionRow] });
+        
+                const joinMessage = await interaction.reply({
+                    content: 'Bạn đã tham gia trò chơi! Vui lòng nhập số tiền cược và loại cược (ví dụ: "300 tài", "1000 xỉu", "500 tài chẵn", "200 bầu", "100 cua").',
+                    ephemeral: true,
+                });
+        
+                setTimeout(() => joinMessage.delete().catch(() => {}), 10000);
+        
+                // Lọc và xử lý thông tin cược của người chơi
+                const filter = (response) => response.author.id === user.id && response.content.match(/^\d+\s+(tài|xỉu|lẻ|chẵn|tài\s+chẵn|tài\s+lẻ|xỉu\s+chẵn|xỉu\s+lẻ|bầu|cua|tôm|cá|gà|nai)$/i);
+                const collectorMessage = message.channel.createMessageCollector({ filter, time: 20000 }); // 20s để nhập cược
+        
+                collectorMessage.on("collect", (betMessage) => {
+                    const [betAmount, ...choiceParts] = betMessage.content.split(" ");
+                    const choice = choiceParts.join(" ").toLowerCase();
+                    const player = participants.get(user.id);
+        
+                    // Cập nhật lựa chọn và số tiền cược của người chơi
+                    player.choice = choice;
+                    player.bet = parseInt(betAmount, 10);
+        
+                    gameMessage.edit({ embeds: [introEmbed, updateParticipantEmbed()], components: [actionRow] });
+        
+                    betMessage.reply({ content: "Cược của bạn đã được ghi nhận!", ephemeral: true }).then((response) => {
+                        setTimeout(() => response.delete().catch(() => {}), 3000);
+                    });
+        
+                    collectorMessage.stop();
+                });
+        
+                collectorMessage.on("end", (collected, reason) => {
+                    if (reason === "time") {
+                        // Nếu hết thời gian mà không có cược
+                        interaction.followUp({
+                            content: "Bạn đã hết thời gian để nhập cược. Không có cược được ghi nhận.",
+                            ephemeral: true,
+                        });
+                    }
+                });
             }
+        
+            if (interaction.customId === "end_game") {
+                if (interaction.user.id !== message.author.id) {
+                    return interaction.reply({ content: "Chỉ người tạo trò chơi mới có quyền kết thúc trò chơi!", ephemeral: true });
+                }
 
-            // Yêu cầu người chơi nhập thông tin cược
-            const filter = (response) => response.author.id === user.id;
-            const reply = await interaction.reply({
-                content: '📝 **Vui lòng nhập số tiền cược và loại cược** (ví dụ: "200 tài", "400 xỉu", "1000 bầu", "300 cua",...)',
-                ephemeral: true,  // Tin nhắn sẽ mất sau 5 đến 8 giây
-            });
+                // Đặt gameActive thành false khi kết thúc trò chơi
+                gameActive = false;
 
-            // Xóa tin nhắn yêu cầu nhập cược sau 5 đến 8 giây (không xóa thông báo lỗi)
-            const randomTimeout = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;  // Từ 5000ms đến 8000ms
-            setTimeout(() => reply.delete(), randomTimeout);
-
-            let validBet = false;
-            let betAmount, betChoice;
-
-            // Lặp lại quá trình nhập cược nếu cược không hợp lệ
-            while (!validBet) {
-                // Thu thập câu trả lời của người chơi
-                const collected = await message.channel.awaitMessages({
-                    filter,
-                    max: 1,
-                    time: 30000, // Thời gian chờ 30 giây
-                    errors: ['time'],
+                const resultMessage = await interaction.reply({
+                    content: "Vui lòng nhập kết quả cuối cùng (ví dụ: tài, xỉu, tài chẵn, bầu, cua, tôm).",
+                    ephemeral: true,
                 });
 
-                const betMessage = collected.first().content.trim().toLowerCase();
-                const betParts = betMessage.split(' ');
+                setTimeout(() => resultMessage.delete().catch(() => {}), 5000);
 
-                if (betParts.length !== 2) {
-                    // Chỉ hiển thị thông báo này khi cú pháp không đúng
-                    const invalidReply = await interaction.followUp({ content: '❌ **Định dạng không đúng!**\nVui lòng nhập đúng cú pháp: "Số tiền cược Loại cược" (ví dụ: "200 tài").', ephemeral: true });
-                    // Không xóa thông báo lỗi định dạng
-                    continue;
+                // Lọc kết quả và tính toán số dư của người chơi
+                const filter = (response) =>
+                    response.author.id === interaction.user.id && response.content.match(/^(tài|xỉu|lẻ|chẵn|tài\s+chẵn|tài\s+lẻ|xỉu\s+chẵn|xỉu\s+lẻ|bầu|cua|tôm|cá|gà|nai)$/i);
+
+                const resultCollector = message.channel.createMessageCollector({ filter, max: 1 });
+
+                resultCollector.on("collect", async (resultMessage) => {
+                    const winningChoice = resultMessage.content.toLowerCase();
+                
+                    // Cập nhật số dư người chơi theo kết quả
+                    participants.forEach((data) => {
+                        const { bet, choice } = data;
+                        const result = outcomeRules[choice] ? outcomeRules[choice][winningChoice] : 0;
+                
+                        if (result === 1) data.balance += bet;
+                        if (result === -1) data.balance -= bet;
+                
+                        data.choice = "";
+                        data.bet = 0;
+                    });
+                
+                    globalParticipants = participants;
+                
+                    // Gửi kết quả trò chơi
+                    await message.channel.send({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle("🎮 Kết quả trò chơi")
+                                .setDescription(`<a:rgshybunnycute:1285599402425188432> ***Kết quả:*** **${winningChoice.toUpperCase()}**`)
+                                .setColor(randomPastelColor())
+                                .addFields({ name: "Người chơi", value: updateParticipantEmbed().data.description })
+                                .setTimestamp(),
+                        ],
+                    });
+                    // Xóa nút bấm sau khi kết thúc trò chơi
+                    gameMessage.edit({ components: [] });
+                });
+    
+            }
+        
+            if (interaction.customId === "set_balance") {
+                if (user.id !== message.author.id) {
+                    return interaction.reply({ content: "Chỉ người tạo trò chơi mới có thể thay đổi số dư!", ephemeral: true });
                 }
+        
+                const filter = (response) => response.author.id === user.id && response.content.match(/^<@!?(\d+)> \d+$/);
+                await interaction.reply({ content: 'Vui lòng tag người chơi và nhập số dư mới của họ (ví dụ: <@1234567890> 1000)', ephemeral: true })
+    .then((msg) => {
+        setTimeout(() => {
+            msg.delete().catch(() => {}); // Xóa tin nhắn sau 5 giây
+        }, 5000);
+    });
 
-                betAmount = parseInt(betParts[0], 10);
-                betChoice = betParts[1];
-
-                // Kiểm tra số tiền cược hợp lệ
-                if (isNaN(betAmount) || betAmount <= 0) {
-                    const invalidBetReply = await interaction.followUp({ content: '❌ **Số tiền cược không hợp lệ!**', ephemeral: true });
-                    // Không xóa thông báo lỗi số tiền cược
-                    continue;
-                }
-
-                // Kiểm tra loại cược hợp lệ
-                const validChoices = ['tài', 'xỉu', 'lẻ', 'chẵn', 'bầu', 'cua', 'tôm', 'cá', 'gà', 'nai'];
-                if (!validChoices.includes(betChoice)) {
-                    const invalidChoiceReply = await interaction.followUp({ content: '❌ **Lựa chọn cược không hợp lệ!**\nVui lòng chọn một trong các loại: tài, xỉu, lẻ, chẵn, bầu, cua, tôm, cá, gà, nai.', ephemeral: true });
-                    // Không xóa thông báo lỗi lựa chọn cược
-                    continue;
-                }
-
-                // Nếu tất cả hợp lệ, thoát khỏi vòng lặp
-                validBet = true;
-
-                // Lưu người tham gia và cược
-                participants.set(user.id, { username: user.id, bet: betAmount, choice: betChoice });
-
-                // Cập nhật danh sách người tham gia
-                await gameMessage.edit({ embeds: [introEmbed, updateParticipantEmbed()] });
-
-                // Xóa tin nhắn nhập cược sau khi xử lý xong
-                await collected.first().delete();
+        
+                const collectorMessage = message.channel.createMessageCollector({ filter, time: 30000 });
+        
+                collectorMessage.on("collect", (msg) => {
+                    const [, taggedUserId, newBalance] = msg.content.match(/^<@!?(\d+)> (\d+)$/);
+                    const player = participants.get(taggedUserId); // Lấy người chơi theo ID
+        
+                    if (player) {
+                        player.balance = parseInt(newBalance, 10); // Cập nhật số dư
+                        msg.reply(`Số dư của <@${taggedUserId}> đã được cập nhật thành **${newBalance}**`);
+                        gameMessage.edit({ embeds: [introEmbed, updateParticipantEmbed()], components: [actionRow] }); // Cập nhật lại danh sách người chơi
+                    } else {
+                        msg.reply(`Không tìm thấy người chơi với ID <@${taggedUserId}>`);
+                    }
+        
+                    collectorMessage.stop();
+                });
+        
+                collectorMessage.on("end", (collected, reason) => {
+                    if (reason === "time") {
+                        interaction.followUp({ content: "Bạn đã hết thời gian để thay đổi số dư.", ephemeral: true });
+                    }
+                });
             }
         });
+        
     },
 };
