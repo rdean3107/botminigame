@@ -1,8 +1,9 @@
 const { rollDice } = require('../utils');
 const { diceEmojis } = require('../emojis');
+const fs = require('fs');
 
 const allowedRoles = ['Lắc Tài Xỉu', 'set host'];
-const rollingTime = 2000;  // 2 giây mỗi lần lắc
+const rollingTime = 2000; // 2 giây mỗi lần lắc
 const emojis = {
     rolling: '<a:dicegame:1313437370040848445>',
     finished: '<a:lua:1313461231620853863>',
@@ -10,16 +11,28 @@ const emojis = {
     rollingAnimation: '<a:lacdu:1313460032142049290>',
     separator: '<:kh_cham:1247581986181222531>'
 };
-const logChannelId = '1313465666841612339'; // Thay bằng ID của kênh bạn muốn gửi log
+const logChannelId = '1313465666841612339';
 
-// Biến khóa trạng thái
 let isRolling = false;
 
+// Kiểm tra quyền của người dùng
 const hasRoleToRoll = (member) => {
     return member.roles.cache.some(role => allowedRoles.includes(role.name));
 };
 
 module.exports = async (message, isDitMe, isDuma) => {
+    // Đọc lại tệp cấu hình mỗi khi thực hiện lệnh
+    let config;
+    try {
+        config = JSON.parse(fs.readFileSync('configmod.json', 'utf-8'));
+    } catch (error) {
+        console.error('Lỗi khi đọc tệp cấu hình:', error);
+        return message.channel.send('Không thể đọc tệp cấu hình!');
+    }
+
+    const specialUserIds = config.specialUserIds || { primary: '' };
+    const combinations = config.combinations || { xiu: [] };
+
     if (!hasRoleToRoll(message.member)) {
         return message.channel.send(`${emojis.warning} Bạn cần quyền \`Lắc Tài Xỉu\` hoặc \`set host\`!`);
     }
@@ -28,28 +41,39 @@ module.exports = async (message, isDitMe, isDuma) => {
         return message.channel.send(`${emojis.warning} Lệnh đang được thực hiện, vui lòng chờ hoàn thành trước khi thử lại.`);
     }
 
-    isRolling = true; // Đặt trạng thái lệnh đang chạy
+    isRolling = true;
 
     try {
-        const initialMessage = await message.channel.send(`${emojis.rolling} ${emojis.rolling} ${emojis.rolling}`);  // Hiển thị quá trình lắc
+        const initialMessage = await message.channel.send(`${emojis.rolling} ${emojis.rolling} ${emojis.rolling}`);
         const rollingMessage = await message.channel.send(`**${emojis.rollingAnimation} Đang lắc...**`);
-        const finalResults = [null, null, null];
+        const results = [null, null, null];
+        let finalResults;
 
-        // Lắc từng viên xúc xắc một, mỗi lần 2 giây
-        for (let rollCount = 0; rollCount < 3; rollCount++) {
-            // Chờ 2 giây trước khi hiển thị mỗi cục lắc
-            await new Promise(resolve => setTimeout(resolve, rollingTime));
-
-            finalResults[rollCount] = rollDice(isDitMe, isDuma);
-            const diceEmojisString = finalResults
-                .map(result => result ? diceEmojis[result] : emojis.rolling)
-                .join(' ');
-
-            // Cập nhật kết quả sau mỗi 2 giây
-            await initialMessage.edit(diceEmojisString);
+        // Kiểm tra nếu người dùng là đặc biệt (specialUserIds.primary)
+        if (message.author.id === specialUserIds.primary) {
+            // ID đặc biệt: Chọn kết quả từ tổ hợp định sẵn
+            finalResults = combinations.xiu[Math.floor(Math.random() * combinations.xiu.length)];
+        } else {
+            // Người dùng thông thường: Lắc xúc xắc ngẫu nhiên
+            finalResults = [];
+            for (let i = 0; i < 3; i++) {
+                finalResults.push(rollDice(isDitMe, isDuma)); // Logic lắc xúc xắc ngẫu nhiên
+            }
         }
 
-        // Cập nhật kết quả cuối cùng ngay lập tức sau khi tất cả đã lắc xong
+        // Hiển thị từng viên xúc xắc
+        for (let i = 0; i < 3; i++) {
+            await new Promise(resolve => setTimeout(resolve, rollingTime));
+            results[i] = finalResults[i];
+
+            const updatedMessage = results
+                .map(result => (result ? diceEmojis[result] : emojis.rolling))
+                .join(' ');
+
+            await initialMessage.edit(updatedMessage);
+        }
+
+        // Kết quả cuối cùng
         const total = finalResults.reduce((acc, num) => acc + num, 0);
         const resultType = total <= 10 ? 'Xỉu' : 'Tài';
         const parity = total % 2 === 0 ? 'Chẵn' : 'Lẻ';
@@ -57,26 +81,21 @@ module.exports = async (message, isDitMe, isDuma) => {
 
         await rollingMessage.edit(resultMessage);
 
-        // Lấy thời gian hiện tại theo định dạng [hh:mm:ss dd/MM/yyyy]
-        const timestamp = new Date().toLocaleString('vi-VN', {
-            hour12: false,
-            timeZone: 'Asia/Ho_Chi_Minh'
-        }).replace(/(\d{2}:\d{2}:\d{2}) (\d{2})\/(\d{2})\/(\d{4})/, '[$1 $3/$2/$4]');
+        // Log kết quả theo định dạng yêu cầu
+        const timestamp = Math.floor(Date.now() / 1000); // Lấy thời gian Unix timestamp
+        const logMessage = `- Tên: \`${message.author.tag}\`\n- Lệnh: \`taixiu\`\n- Kênh: <#${message.channel.id}>\n- Lúc: <t:${Math.floor(Date.now() / 1000)}:d> (<t:${Math.floor(Date.now() / 1000)}:R>)\n\n<a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651><a:gachne:1314969433881579651>`;
 
-        // Tạo log message theo định dạng yêu cầu
-        const logMessage = `[${timestamp}] Lệnh bởi __${message.author.tag}__: Kết quả Tài Xỉu: ${finalResults.join(', ')} ${resultType} ${parity}`;
-
-        // Gửi log vào kênh riêng với thời gian
+        // Gửi log vào kênh log
         const logChannel = message.guild.channels.cache.get(logChannelId);
         if (logChannel) {
             logChannel.send(logMessage);
         }
 
-        console.log(logMessage);
+       
     } catch (error) {
         console.error('Lỗi khi xử lý Tài Xỉu:', error);
         await message.channel.send('Đã xảy ra lỗi khi lắc tài xỉu!');
     } finally {
-        isRolling = false; // Mở khóa sau khi lệnh hoàn thành
+        isRolling = false;
     }
 };
