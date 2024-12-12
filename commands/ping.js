@@ -1,4 +1,4 @@
-const { MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = async (message) => {
     const msg = await message.channel.send('🏓 Đang kiểm tra độ trễ...');
@@ -15,13 +15,15 @@ module.exports = async (message) => {
     const uptimeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
 
     // Tạo embed
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setColor(0xff7f8b)
         .setTitle('🏓 Pong!')
-        .addField('Độ trễ tin nhắn', `${messagePing}ms`, true)
-        .addField('Độ trễ API', `${apiPing}ms`, true)
-        .addField('Thời gian hoạt động', uptimeString, false)
-        .setFooter(`Yêu cầu bởi ${message.author.tag}`, message.author.displayAvatarURL());
+        .addFields(
+            { name: 'Độ trễ tin nhắn', value: `${messagePing}ms`, inline: true },
+            { name: 'Độ trễ API', value: `${apiPing}ms`, inline: true },
+            { name: 'Thời gian hoạt động', value: uptimeString, inline: true }
+        )
+        .setFooter({ text: `Yêu cầu bởi ${message.author.tag}`, iconURL: message.author.displayAvatarURL() });
 
     await msg.edit({ content: null, embeds: [embed] });
 };
