@@ -1,3 +1,5 @@
+const { MessageEmbed } = require('discord.js');
+
 module.exports = async (message) => {
     const msg = await message.channel.send('🏓 Đang kiểm tra độ trễ...');
     const messagePing = msg.createdTimestamp - message.createdTimestamp; // Độ trễ tin nhắn
@@ -12,5 +14,14 @@ module.exports = async (message) => {
 
     const uptimeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
 
-    await msg.edit(`🏓 Pong!\nĐộ trễ tin nhắn\n${messagePing}ms\nĐộ trễ API\n${apiPing}ms\nThời gian hoạt động\n${uptimeString}\n\nYêu cầu bởi ${message.author}`);
+    // Tạo embed
+    const embed = new MessageEmbed()
+        .setColor(0xff7f8b)
+        .setTitle('🏓 Pong!')
+        .addField('Độ trễ tin nhắn', `${messagePing}ms`, true)
+        .addField('Độ trễ API', `${apiPing}ms`, true)
+        .addField('Thời gian hoạt động', uptimeString, false)
+        .setFooter(`Yêu cầu bởi ${message.author.tag}`, message.author.displayAvatarURL());
+
+    await msg.edit({ content: null, embeds: [embed] });
 };
