@@ -9,6 +9,7 @@ const handleGiveAway = require('../commands/giveaway');
 const handleVoice = require('../commands/voice');
 const handleBd = require('../commands/bd');
 const handleParity = require('../commands/parity');  // Thêm lệnh parity
+const handleSay = require('../commands/say');
 
 // Bảng ánh xạ lệnh và hàm xử lý
 const commandHandlers = {
@@ -23,6 +24,7 @@ const commandHandlers = {
     leave: (message, args) => handleVoice.execute(message, 'leave'),
     bd: handleBd,
     p: handleParity,  // Thêm lệnh parity với prefix 'p'
+    say: handleSay.execute,
 };
 
 const onMessageCreate = (message, config) => {
