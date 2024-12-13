@@ -26,10 +26,10 @@ try {
 
 // Danh sách các trạng thái hoạt động
 const activities = [
-    { name: 'chơi game ', type: ActivityType.Playing },
-    { name: 'meo phim', type: ActivityType.Watching },
+    { name: 'Tài Xỉu ', type: ActivityType.Playing },
+    { name: 'Bầu Cua', type: ActivityType.Watching },
     { name: 'nhạc', type: ActivityType.Listening },
-    { name: 'trực tuyến', type: ActivityType.Streaming, url: 'https://discord.com/channels/1228364336142094387/1298926022514704384' },
+    { name: 'trực tuyến', type: ActivityType.Streaming, url: 'https://discord.com/channels/1281667360415027251/1302997095774552205' },
 ];
 
 // Khởi động bot
