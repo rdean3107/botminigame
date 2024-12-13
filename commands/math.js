@@ -20,7 +20,7 @@ module.exports = {
             const result = math.evaluate(expression);
 
             // Trả kết quả
-            message.reply(`<:tick:1306785771881107456> **OCB**, Kết quả của phép toán là: **${result}**`);
+            message.reply(`<:tick:1306785771881107456> **Tiệm Trà Lu**, Kết quả của phép toán là: **${result}**`);
         } catch (error) {
             // Nếu phép toán không hợp lệ, thông báo lỗi
             return message.reply('Có lỗi xảy ra khi tính toán phép toán! Vui lòng kiểm tra lại cú pháp.');
